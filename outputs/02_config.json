@@ -1,0 +1,42 @@
+{
+ "panel": {
+  "n_participants": 71,
+  "n_slots": 180305,
+  "n_duplicate_rows_dropped": 70
+ },
+ "channel_sets": {
+  "bpm": [
+   "bpm"
+  ],
+  "bpm+steps": [
+   "bpm",
+   "steps"
+  ],
+  "bpm+steps+calories": [
+   "bpm",
+   "steps",
+   "calories"
+  ],
+  "5x_true_hourly": [
+   "bpm",
+   "steps",
+   "calories",
+   "distance",
+   "temperature"
+  ],
+  "5x_hourly+scl_avg": [
+   "bpm",
+   "steps",
+   "calories",
+   "distance",
+   "temperature",
+   "scl_avg"
+  ]
+ },
+ "event_cols": {
+  "exercise_any": "ev_exercise_any",
+  "exercise_vigorous": "ev_exercise_vigorous",
+  "walk_only": "ev_walk",
+  "mindfulness": "ev_mindfulness"
+ }
+}

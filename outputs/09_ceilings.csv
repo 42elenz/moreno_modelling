@@ -1,0 +1,5 @@
+event_type,event_hours,distinct_sessions,max_triples_any_setting,max_triples_with_ema
+exercise_any,3909,3458,3764,1807
+exercise_vigorous,1039,953,973,489
+walk_only,2871,2606,2796,1324
+mindfulness,131,129,123,63

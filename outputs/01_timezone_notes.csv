@@ -1,0 +1,8 @@
+field,note
+hourly.date,"date string YYYY-MM-DD, no tz, hour is separate float column"
+daily.date,"date string YYYY-MM-DD, no tz"
+sema.CREATED_TS,"naive ISO local time, minute resolution, e.g. 2021-12-15 15:26:00"
+sema.SCHEDULED_TS,"naive ISO local time, minute resolution, e.g. 2021-12-15 15:16:00"
+sema.STARTED_TS,"naive ISO local time, minute resolution, e.g. 2021-12-15 15:26:00"
+sema.COMPLETED_TS,"naive ISO local time, minute resolution, e.g. 2021-12-15 15:26:00"
+sema.UPLOADED_TS,"naive ISO local time, minute resolution, e.g. 2021-12-15 15:26:00"

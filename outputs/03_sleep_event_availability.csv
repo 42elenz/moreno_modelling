@@ -1,0 +1,6 @@
+field,available,n,note
+sleep onset timestamp (data.sleep_start in the absent fitbit collection),NO,0,no timestamped sleep event anywhere in the released files
+daily.sleep_duration,daily aggregate only,3551,"one value per participant-night, no onset time"
+daily.minutesAsleep,daily aggregate only,3551,"one value per participant-night, no onset time"
+daily.sleep_efficiency,daily aggregate only,3551,"one value per participant-night, no onset time"
+daily.sleep_deep_ratio,daily aggregate only,3294,"one value per participant-night, no onset time"

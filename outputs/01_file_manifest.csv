@@ -1,0 +1,16 @@
+file,bytes,mb,records
+FEASIBILITY.md,12255,0.01,
+INVENTORY.md,11395,0.01,
+README.md,3668,0.0,
+breq.csv,8831,0.01,92.0
+daily_fitbit_sema_df_unprocessed.csv,2066609,2.07,7410.0
+fitbit.metadata.json,1628,0.0,
+hourly_fitbit_sema_df_unprocessed.csv,21137596,21.14,159508.0
+panas.csv,13741,0.01,268.0
+personality.csv,5456,0.01,50.0
+sema.bson,10705286,10.71,15380.0
+sema.metadata.json,170,0.0,
+stai.csv,17027,0.02,279.0
+surveys.bson,644889,0.64,935.0
+surveys.metadata.json,173,0.0,
+ttm.csv,17464,0.02,94.0
