@@ -1,0 +1,579 @@
+<title>LifeSnaps Triple Audit</title>
+<style>
+:root{
+  color-scheme:light;
+  --plane:#f9f9f7; --surface-1:#fcfcfb;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,0.10);
+  --s1:#2a78d6; --s2:#eb6834;
+  --seq-100:#cde2fb; --seq-250:#86b6ef; --seq-400:#3987e5; --seq-550:#1c5cab; --seq-700:#0d366b;
+  --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --plane:#0d0d0d; --surface-1:#1a1a19;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+  --s1:#3987e5; --s2:#d95926;
+  --seq-100:#0d366b; --seq-250:#184f95; --seq-400:#256abf; --seq-550:#3987e5; --seq-700:#9ec5f4;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --plane:#0d0d0d; --surface-1:#1a1a19;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+  --s1:#3987e5; --s2:#d95926;
+  --seq-100:#0d366b; --seq-250:#184f95; --seq-400:#256abf; --seq-550:#3987e5; --seq-700:#9ec5f4;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--ink);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.viz-root{background:var(--plane);color:var(--ink);min-height:100vh;padding:24px 20px 64px}
+.wrap{max-width:1220px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:15px;margin:0 0 2px;letter-spacing:-.005em}
+.sub{color:var(--ink-2);margin:0 0 20px;font-size:13px}
+.card{background:var(--surface-1);border:1px solid var(--ring);border-radius:10px;padding:16px 18px;margin-bottom:16px}
+.cap{color:var(--muted);font-size:12px;margin:2px 0 14px}
+.banner{border-left:3px solid var(--critical);background:var(--surface-1);border-radius:0 8px 8px 0;
+  padding:12px 16px;margin-bottom:10px}
+.banner.warn{border-left-color:var(--warning)}
+.banner > b{display:block;margin-bottom:2px}
+.banner p b{display:inline}
+.banner p{margin:0;color:var(--ink-2);font-size:13px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:16px}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px 20px;align-items:start}
+label.f{display:block;font-size:12px;color:var(--ink-2);margin-bottom:5px;font-weight:500}
+input[type=range]{width:100%;accent-color:var(--s1)}
+select,button{font:inherit;font-size:13px;color:var(--ink);background:var(--surface-1);
+  border:1px solid var(--axis);border-radius:6px;padding:5px 8px;width:100%}
+select[multiple]{height:132px}
+.val{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{font-size:11px;padding:2px 7px;border-radius:20px;border:1px solid var(--ring);color:var(--ink-2)}
+.chip.hourly{border-color:var(--s1);color:var(--s1)}
+.chip.daily{border-color:var(--serious);color:var(--serious)}
+.hero{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-end}
+.hero .n{font-size:56px;font-weight:700;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.hero .lbl{font-size:12px;color:var(--muted);margin-top:6px}
+.stat .n{font-size:28px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--grid)}
+th{color:var(--muted);font-weight:500;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
+td.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:14px}
+.scroll{overflow-x:auto}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink-2);margin-bottom:8px;flex-wrap:wrap}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;box-shadow:0 0 0 1px var(--ring)}
+svg{display:block;max-width:100%}
+.tip{position:fixed;pointer-events:none;z-index:50;background:var(--surface-1);color:var(--ink);
+  border:1px solid var(--ring);border-radius:6px;padding:6px 9px;font-size:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.13);opacity:0;transition:opacity .09s}
+.tip .k{color:var(--muted)}
+canvas{max-width:100%;display:block;image-rendering:pixelated}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+.gr-hourly{color:var(--s1)} .gr-daily{color:var(--serious);font-weight:600}
+</style>
+
+<div class="viz-root"><div class="wrap">
+<h1>LifeSnaps: can it support an action-conditioned latent transition model?</h1>
+<p class="sub">Live audit of pre-window / action / post-window triples over the released files.
+Everything below is recomputed in the browser from an observed-vs-missing bitmap. No imputation anywhere.</p>
+
+<div id="banners"></div>
+
+<div class="card">
+  <h2>Controls</h2>
+  <p class="cap">The underlying grid is <b>hourly</b>. W and &Delta; below are entered in minutes to match the
+  spec, then rounded up to whole hours &mdash; anything under 60&nbsp;min is one hour, because there is no finer data.</p>
+  <div class="ctl">
+    <div>
+      <label class="f">Pre-window W = <span class="val" id="lW"></span></label>
+      <input type="range" id="W" min="5" max="1440" step="5" value="240">
+      <div class="chips"><span class="chip" id="Wh"></span></div>
+    </div>
+    <div>
+      <label class="f">Horizon &Delta; = <span class="val" id="lD"></span></label>
+      <input type="range" id="D" min="30" max="1440" step="30" value="240">
+      <div class="chips"><span class="chip" id="Dh"></span></div>
+    </div>
+    <div>
+      <label class="f">Completeness threshold p = <span class="val" id="lP"></span></label>
+      <input type="range" id="P" min="50" max="100" step="5" value="90">
+    </div>
+    <div>
+      <label class="f">Event type</label>
+      <select id="EV"></select>
+      <div class="chips"><span class="chip" id="evn"></span></div>
+    </div>
+    <div>
+      <label class="f">Channel set C (ctrl/cmd-click)</label>
+      <select id="CH" multiple></select>
+      <div class="chips">
+        <span class="chip hourly">blue = true hourly</span>
+        <span class="chip daily">orange = daily aggregate</span>
+      </div>
+    </div>
+    <div>
+      <label class="f">Post-window requirement</label>
+      <div class="toggle"><input type="checkbox" id="EMA"><label for="EMA">Require a mood EMA inside &Delta;</label></div>
+      <div class="note" style="margin-top:10px">Total answered mood EMAs: <span class="val" id="ematot"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Usable triples at this setting</h2>
+  <p class="cap">An event hour counts when the W hours before it and the &Delta; hours after it are each
+  &ge;&nbsp;p complete across every selected channel, counted over channel&times;hour cells.</p>
+  <div class="hero">
+    <div><div class="n" id="hero">&mdash;</div><div class="lbl" id="herolbl">triples</div></div>
+    <div class="stat"><div class="n" id="s_pp">&mdash;</div><div class="lbl">participants with &ge;1</div></div>
+    <div class="stat"><div class="n" id="s_pp10">&mdash;</div><div class="lbl">with &ge;10</div></div>
+    <div class="stat"><div class="n" id="s_pp50">&mdash;</div><div class="lbl">with &ge;50</div></div>
+    <div class="stat"><div class="n" id="s_ceiling">&mdash;</div><div class="lbl">event hours of this type in the whole cohort<br>(the hard ceiling on triples)</div></div>
+    <div class="stat"><div class="n" id="s_yield">&mdash;</div><div class="lbl">yield vs ceiling</div></div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Triples per participant</h2>
+    <p class="cap">Sorted. The tail on the right is the part of the cohort that contributes nothing.</p>
+    <div id="ppbar"></div>
+  </div>
+  <div class="card">
+    <h2>Participants vs. required triples each</h2>
+    <p class="cap">How many of the 71 clear a per-person budget &mdash; the number that decides whether
+    a per-participant or hierarchical model is trainable.</p>
+    <div id="viab"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Coverage: participant &times; study day</h2>
+  <p class="cap">Cell = fraction of that day's 24 hours where <i>every</i> selected channel is observed.
+  Rows are participants sorted by coverage; columns are days since that participant's first hour
+  (cohort start dates are staggered across <span id="daterange"></span>).</p>
+  <div class="legend" id="heatleg"></div>
+  <canvas id="heat" height="300"></canvas>
+  <div class="note">Grey = beyond that participant's observation span.</div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Contiguous complete runs</h2>
+    <p class="cap">Consecutive hours with all selected channels observed. This, not the headline
+    missingness percentage, is what decides whether a window of length W+&Delta; ever fits.</p>
+    <div id="gaps"></div>
+  </div>
+  <div class="card">
+    <h2>Propensity overlap</h2>
+    <p class="cap">Gradient-boosted model predicting &ldquo;event in this hour&rdquo; from a 4&nbsp;h fully-observed
+    pre-window, scored out-of-fold with participant-grouped CV. Precomputed in Python &mdash; it does not
+    move with the controls above. AUC&nbsp;&gt;&nbsp;0.85 would mean positivity is failing.</p>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--s1)"></span>did not act (filled)</span>
+      <span><span class="sw" style="background:var(--s2)"></span>acted (outline)</span>
+    </div>
+    <div id="prop"></div>
+    <div id="propsum"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Channel granularity &mdash; what is a time series and what is not</h2>
+  <p class="cap">&ldquo;Varies within a participant-day&rdquo; is the test: a column that never takes two values
+  inside one person's day is a daily aggregate that was written into a single hourly row.</p>
+  <div class="scroll"><table id="grantab"></table></div>
+</div>
+
+</div></div>
+<div class="tip" id="tip"></div>
+
+<script>
+const DATA = __PAYLOAD__;
+const $ = s => document.querySelector(s);
+const fmt = n => n.toLocaleString("en-US");
+const tip = $("#tip");
+function showTip(e, html){ tip.innerHTML = html; tip.style.opacity = 1;
+  const r = tip.getBoundingClientRect();
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - r.width - 8) + "px";
+  tip.style.top  = Math.max(e.clientY - r.height - 12, 8) + "px"; }
+function hideTip(){ tip.style.opacity = 0; }
+function cssv(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+/* ---------- unpack the presence bitmap ---------- */
+const B64 = new Map();
+function bits(p, ch){                        // keyed on the pair, never on payload content
+  const key = p.id + "|" + ch;
+  let out = B64.get(key);
+  if (out) return out;
+  const bin = atob(p.ch[ch]);
+  out = new Uint8Array(p.n);
+  for (let i = 0; i < p.n; i++) out[i] = (bin.charCodeAt(i >> 3) >> (7 - (i & 7))) & 1;
+  B64.set(key, out); return out;
+}
+const PRE = new Map();                       // "pid|channel" -> Int32Array prefix sums
+function prefix(p, ch){
+  const k = p.id + "|" + ch;
+  let a = PRE.get(k);
+  if (a) return a;
+  const b = bits(p, ch);
+  a = new Int32Array(p.n + 1);
+  for (let i = 0; i < p.n; i++) a[i + 1] = a[i] + b[i];
+  PRE.set(k, a); return a;
+}
+const EMAPRE = new Map();
+function emaPrefix(p){
+  let a = EMAPRE.get(p.id); if (a) return a;
+  a = new Int32Array(p.n + 1);
+  const s = new Uint8Array(p.n); p.ema.forEach(i => s[i] = 1);
+  for (let i = 0; i < p.n; i++) a[i + 1] = a[i] + s[i];
+  EMAPRE.set(p.id, a); return a;
+}
+/* per-hour AND across the selected channels */
+function allMask(p, C){
+  const m = new Uint8Array(p.n).fill(1);
+  for (const c of C){ const b = bits(p, c);
+    for (let i = 0; i < p.n; i++) if (!b[i]) m[i] = 0; }
+  return m;
+}
+
+/* ---------- state ---------- */
+const S = { W: 240, D: 240, p: 0.9, ev: DATA.event_types[0], C: ["bpm", "steps"], ema: false };
+const ceilHrs = () => Math.ceil(S.W / 60), ceilD = () => Math.ceil(S.D / 60);
+
+function countTriples(){
+  const Wh = ceilHrs(), Dh = ceilD(), C = S.C, nc = C.length;
+  const per = [];
+  let total = 0;
+  for (const p of DATA.participants){
+    const idx = p[S.ev]; if (!idx.length || !nc) { per.push({ p, n: 0 }); continue; }
+    const pf = C.map(c => prefix(p, c));
+    const ef = S.ema ? emaPrefix(p) : null;
+    let n = 0;
+    for (const t of idx){
+      if (t - Wh < 0 || t + 1 + Dh > p.n) continue;
+      let pre = 0, post = 0;
+      for (let k = 0; k < nc; k++){
+        const a = pf[k];
+        pre  += a[t] - a[t - Wh];
+        post += a[t + 1 + Dh] - a[t + 1];
+      }
+      if (pre < S.p * Wh * nc || post < S.p * Dh * nc) continue;
+      if (ef && ef[t + 1 + Dh] - ef[t + 1] <= 0) continue;
+      n++;
+    }
+    total += n; per.push({ p, n });
+  }
+  return { total, per };
+}
+
+/* ---------- SVG helpers ---------- */
+const NS = "http://www.w3.org/2000/svg";
+function svg(w, h){ const s = document.createElementNS(NS, "svg");
+  s.setAttribute("viewBox", `0 0 ${w} ${h}`); s.setAttribute("width", "100%");
+  s.setAttribute("height", h); return s; }
+function el(t, a, parent){ const e = document.createElementNS(NS, t);
+  for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; }
+function txt(p, x, y, s, o = {}){ const t = el("text", Object.assign(
+  { x, y, fill: o.fill || "var(--muted)", "font-size": o.fs || 11,
+    "text-anchor": o.anchor || "start" }, o.extra || {}), p);
+  t.textContent = s; return t; }
+
+/* ---------- per-participant bars ---------- */
+function drawPP(per){
+  const host = $("#ppbar"); host.innerHTML = "";
+  const d = per.slice().sort((a, b) => b.n - a.n);
+  const W = 560, rowH = 9, H = d.length * rowH + 34, L = 46, R = 46;
+  const max = Math.max(1, d[0].n);
+  const s = svg(W, H); host.appendChild(s);
+  const x = v => L + (W - L - R) * v / max;
+  [0, .25, .5, .75, 1].forEach(f => {
+    el("line", { x1: x(max * f), x2: x(max * f), y1: 16, y2: H - 18,
+      stroke: "var(--grid)", "stroke-width": 1 }, s);
+    txt(s, x(max * f), 11, Math.round(max * f), { anchor: "middle" });
+  });
+  d.forEach((r, i) => {
+    const y = 18 + i * rowH;
+    if (r.n > 0){
+      const bw = Math.max(2, x(r.n) - L);
+      el("rect", { x: L, y, width: bw, height: rowH - 2.5, rx: Math.min(4, bw / 2),
+        fill: "var(--s1)" }, s);
+    }
+    const hit = el("rect", { x: 0, y: y - 1, width: W, height: rowH,
+      fill: "transparent" }, s);
+    hit.addEventListener("mousemove", e => showTip(e,
+      `<b>${r.p.short}</b><br><span class="k">triples</span> ${fmt(r.n)}<br>
+       <span class="k">event hours</span> ${fmt(r.p[S.ev].length)}<br>
+       <span class="k">observed hours</span> ${fmt(r.p.n)}`));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+  const nz = d.filter(r => r.n > 0).length;
+  txt(s, L, H - 5, `${nz} of ${d.length} participants contribute at least one triple`,
+    { fill: "var(--ink-2)" });
+}
+
+/* ---------- viability curve ---------- */
+function drawViab(per){
+  const host = $("#viab"); host.innerHTML = "";
+  const thr = [1, 2, 5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500];
+  const pts = thr.map(t => ({ t, n: per.filter(r => r.n >= t).length }));
+  const W = 560, H = 250, L = 42, R = 12, T = 14, B = 34;
+  const s = svg(W, H); host.appendChild(s);
+  const xs = i => L + (W - L - R) * i / (thr.length - 1);
+  const ys = v => H - B - (H - B - T) * v / 71;
+  [0, 18, 36, 53, 71].forEach(v => {
+    el("line", { x1: L, x2: W - R, y1: ys(v), y2: ys(v), stroke: "var(--grid)" }, s);
+    txt(s, L - 6, ys(v) + 3.5, v, { anchor: "end" });
+  });
+  const path = pts.map((p, i) => `${i ? "L" : "M"}${xs(i)},${ys(p.n)}`).join("");
+  el("path", { d: path, fill: "none", stroke: "var(--s1)", "stroke-width": 2,
+    "stroke-linejoin": "round" }, s);
+  pts.forEach((p, i) => {
+    el("circle", { cx: xs(i), cy: ys(p.n), r: 4, fill: "var(--s1)",
+      stroke: "var(--surface-1)", "stroke-width": 2 }, s);
+    if (i % 2 === 0) txt(s, xs(i), H - B + 14, p.t, { anchor: "middle" });
+    const hit = el("circle", { cx: xs(i), cy: ys(p.n), r: 11, fill: "transparent" }, s);
+    hit.addEventListener("mousemove", e => showTip(e,
+      `<span class="k">&ge;</span> ${p.t} triples each<br><b>${p.n}</b> participants`));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+  [[20, "n=20"], [50, "n=50"]].forEach(([v, lab]) => {
+    el("line", { x1: L, x2: W - R, y1: ys(v), y2: ys(v), stroke: "var(--axis)",
+      "stroke-dasharray": "3 3" }, s);
+  });
+  txt(s, L, H - 4, "minimum triples required per participant", { fill: "var(--ink-2)" });
+  txt(s, L - 34, T + 4, "n", { fill: "var(--muted)" });
+}
+
+/* ---------- coverage heatmap ---------- */
+function drawHeat(){
+  const cv = $("#heat"), C = S.C;
+  const parts = DATA.participants;
+  const rows = parts.map(p => {
+    const m = C.length ? allMask(p, C) : new Uint8Array(p.n);
+    const nd = Math.ceil(p.n / 24), v = new Float32Array(nd);
+    for (let d = 0; d < nd; d++){
+      let s = 0, c = 0;
+      for (let h = d * 24; h < Math.min((d + 1) * 24, p.n); h++){ s += m[h]; c++; }
+      v[d] = c ? s / c : 0;
+    }
+    return { p, v, mean: v.reduce((a, b) => a + b, 0) / Math.max(nd, 1) };
+  }).sort((a, b) => b.mean - a.mean);
+  const maxD = Math.max(...rows.map(r => r.v.length));
+  const cw = 4, ch = 8, L = 40, T = 4;
+  cv.width = L + maxD * cw; cv.height = rows.length * ch + 22;
+  cv.style.width = "100%"; cv.style.height = "auto";
+  const g = cv.getContext("2d");
+  const ramp = ["--seq-100", "--seq-250", "--seq-400", "--seq-550", "--seq-700"].map(cssv);
+  g.fillStyle = cssv("--surface-1"); g.fillRect(0, 0, cv.width, cv.height);
+  rows.forEach((r, i) => {
+    const y = T + i * ch;
+    for (let d = 0; d < maxD; d++){
+      if (d >= r.v.length){ g.fillStyle = cssv("--grid"); }
+      else if (r.v[d] === 0){ g.fillStyle = cssv("--grid"); }
+      else { g.fillStyle = ramp[Math.min(4, Math.floor(r.v[d] * 4.999))]; }
+      g.fillRect(L + d * cw, y, cw - 0.5, ch - 1);
+    }
+  });
+  g.fillStyle = cssv("--muted"); g.font = "10px system-ui";
+  g.textAlign = "right";
+  rows.forEach((r, i) => { if (i % 4 === 0) g.fillText(r.p.short, L - 5, T + i * ch + 7); });
+  g.textAlign = "left";
+  for (let d = 0; d <= maxD - 12; d += 30) g.fillText("d" + d, L + d * cw, cv.height - 6);
+  cv.onmousemove = e => {
+    const b = cv.getBoundingClientRect(), sc = cv.width / b.width;
+    const px = (e.clientX - b.left) * sc, py = (e.clientY - b.top) * sc;
+    const i = Math.floor((py - T) / ch), d = Math.floor((px - L) / cw);
+    if (i < 0 || i >= rows.length || d < 0 || d >= rows[i].v.length) return hideTip();
+    showTip(e, `<b>${rows[i].p.short}</b> &middot; day ${d}<br>
+      <span class="k">complete hours</span> ${(rows[i].v[d] * 24).toFixed(0)} / 24`);
+  };
+  cv.onmouseleave = hideTip;
+  $("#heatleg").innerHTML = ["0 / grey", "1-20%", "20-40%", "40-60%", "60-80%", "80-100%"]
+    .map((l, i) => i === 0 ? `<span><span class="sw" style="background:var(--grid)"></span>${l}</span>`
+      : `<span><span class="sw" style="background:var(--seq-${[0,100,250,400,550,700][i]})"></span>${l}</span>`).join("");
+}
+
+/* ---------- gap-length histogram ---------- */
+function drawGaps(){
+  const C = S.C, host = $("#gaps"); host.innerHTML = "";
+  const buckets = [[1,1],[2,2],[3,3],[4,5],[6,7],[8,11],[12,15],[16,23],[24,47],[48,95],[96,1e9]];
+  const labs = ["1","2","3","4-5","6-7","8-11","12-15","16-23","24-47","48-95","96+"];
+  const cnt = new Array(buckets.length).fill(0);
+  let runs = 0, hours = 0;
+  for (const p of DATA.participants){
+    if (!C.length) break;
+    const m = allMask(p, C);
+    let r = 0;
+    for (let i = 0; i <= p.n; i++){
+      if (i < p.n && m[i]) { r++; continue; }
+      if (r > 0){ runs++; hours += r;
+        for (let b = 0; b < buckets.length; b++) if (r >= buckets[b][0] && r <= buckets[b][1]){ cnt[b]++; break; }
+        r = 0; }
+    }
+  }
+  const need = ceilHrs() + ceilD() + 1;
+  const W = 560, H = 250, L = 44, R = 12, T = 16, B = 42;
+  const max = Math.max(1, ...cnt);
+  const s = svg(W, H); host.appendChild(s);
+  const bw = (W - L - R) / buckets.length;
+  const ys = v => H - B - (H - B - T) * (v <= 0 ? 0 : Math.log10(v + 1) / Math.log10(max + 1));
+  [1, 10, 100, 1000].filter(v => v <= max * 1.4).forEach(v => {
+    el("line", { x1: L, x2: W - R, y1: ys(v), y2: ys(v), stroke: "var(--grid)" }, s);
+    txt(s, L - 6, ys(v) + 3.5, v, { anchor: "end" });
+  });
+  cnt.forEach((c, i) => {
+    const x = L + i * bw, h = H - B - ys(c);
+    const lo = buckets[i][0], hi = buckets[i][1];
+    const usable = hi >= need;
+    if (c > 0) el("rect", { x: x + 2, y: ys(c), width: bw - 4, height: Math.max(h, 1),
+      rx: 4, fill: usable ? "var(--s1)" : "var(--axis)" }, s);
+    txt(s, x + bw / 2, H - B + 14, labs[i], { anchor: "middle" });
+    const hit = el("rect", { x, y: T, width: bw, height: H - B - T, fill: "transparent" }, s);
+    hit.addEventListener("mousemove", e => showTip(e,
+      `<span class="k">run length</span> ${labs[i]} h<br><b>${fmt(c)}</b> runs<br>
+       ${usable ? "long enough for W+&Delta;" : "too short for W+&Delta;"}`));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+  txt(s, L, H - 8, `${fmt(runs)} runs, ${fmt(hours)} complete hours - a triple needs ${need} contiguous hours`,
+    { fill: "var(--ink-2)" });
+  txt(s, L, T - 5, "runs (log)", { fill: "var(--muted)" });
+}
+
+/* ---------- propensity overlap (precomputed) ---------- */
+function drawProp(){
+  const host = $("#prop"); host.innerHTML = "";
+  const rows = DATA.propensity.filter(r => r.event_type === S.ev);
+  const sum = DATA.propensity_summary.find(r => r.event_type === S.ev);
+  if (!rows.length){ host.innerHTML = '<p class="note">Not fitted for this event type.</p>'; return; }
+  const A = rows.map(r => r.n_acted), N = rows.map(r => r.n_not_acted);
+  const sa = A.reduce((x, y) => x + y, 0) || 1, sn = N.reduce((x, y) => x + y, 0) || 1;
+  const da = A.map(v => v / sa), dn = N.map(v => v / sn);
+  const max = Math.max(...da, ...dn, 1e-6);
+  const W = 560, H = 236, L = 46, R = 12, T = 14, B = 40;
+  const s = svg(W, H); host.appendChild(s);
+  const bw = (W - L - R) / rows.length;
+  const ys = v => H - B - (H - B - T) * (v <= 0 ? 0 : v / max);
+  [0, .25, .5, .75, 1].forEach(f => {
+    el("line", { x1: L, x2: W - R, y1: ys(max * f), y2: ys(max * f), stroke: "var(--grid)" }, s);
+    txt(s, L - 6, ys(max * f) + 3.5, (max * f).toFixed(2), { anchor: "end" });
+  });
+  rows.forEach((r, i) => {
+    const x = L + i * bw;
+    if (dn[i] > 0)
+      el("rect", { x: x + 1, y: ys(dn[i]), width: Math.max(bw - 2, 1),
+        height: Math.max(H - B - ys(dn[i]), 1), rx: 2, fill: "var(--s1)",
+        "fill-opacity": .5, stroke: "var(--surface-1)", "stroke-width": 1 }, s);
+    if (i % 8 === 0) txt(s, x, H - B + 14, r.bin_lo.toFixed(2), { anchor: "middle" });
+    const hit = el("rect", { x, y: T, width: bw, height: H - B - T, fill: "transparent" }, s);
+    hit.addEventListener("mousemove", e => showTip(e,
+      `<span class="k">propensity</span> ${r.bin_lo.toFixed(3)}-${r.bin_hi.toFixed(3)}<br>
+       acted <b>${fmt(r.n_acted)}</b><br>did not act <b>${fmt(r.n_not_acted)}</b>`));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+  // "acted" as a stepped outline on top - identity by shape as well as hue
+  let d = "";
+  rows.forEach((r, i) => {
+    const x = L + i * bw, y = ys(da[i]);
+    d += (i ? "L" : "M") + x + "," + y + "L" + (x + bw) + "," + y;
+  });
+  el("path", { d, fill: "none", stroke: "var(--s2)", "stroke-width": 2,
+    "stroke-linejoin": "round" }, s);
+  txt(s, L, H - 6, "estimated propensity of acting in this hour", { fill: "var(--ink-2)" });
+  txt(s, L, T - 4, "share of group", { fill: "var(--muted)" });
+  if (sum){
+    const fail = Number(sum.auc_gbm) > 0.85;
+    $("#propsum").innerHTML = `<table>
+      <tr><th>positives</th><th>base rate</th><th>AUC logistic</th><th>AUC GBM</th>
+      <th>median within-person AUC</th><th>verdict</th></tr>
+      <tr><td class="num">${fmt(sum.n_pos)}</td><td class="num">${(sum.base_rate*100).toFixed(2)}%</td>
+      <td class="num">${sum.auc_logreg}</td>
+      <td class="num" style="font-weight:600;color:${fail ? "var(--critical)" : "var(--good)"}">${sum.auc_gbm}</td>
+      <td class="num">${sum.auc_within_participant_median}</td>
+      <td>${fail ? "positivity FAILS (&gt;0.85)" : "overlap holds"}</td></tr></table>`;
+  }
+}
+
+/* ---------- granularity table ---------- */
+function drawGran(){
+  const t = $("#grantab");
+  t.innerHTML = "<tr><th>channel</th><th>actual granularity</th>"
+    + "<th>varies within a participant-day</th><th>% of dense hours observed</th><th>range</th></tr>"
+    + DATA.granularity.map(r => {
+      const daily = r.actual.startsWith("DAILY");
+      return `<tr><td>${r.channel}</td>
+        <td class="${daily ? "gr-daily" : "gr-hourly"}">${daily ? "&#9888; " : ""}${r.actual}</td>
+        <td class="num">${(r.frac_pdays_varying * 100).toFixed(1)}%</td>
+        <td class="num">${r.pct_present_of_dense_hours}%</td>
+        <td class="num">${r.min} &ndash; ${r.max}</td></tr>`;
+    }).join("");
+}
+
+/* ---------- banners ---------- */
+function drawBanners(){
+  const dailies = DATA.meta.daily_stamped.join(", ");
+  $("#banners").innerHTML = `
+  <div class="banner"><b>The minute-level Fitbit collection is not in this release.</b>
+  <p><code>fitbit.metadata.json</code> is present and indexes <code>data.value.bpm</code>,
+  <code>data.sleep_start</code>, <code>data.startTime</code> and <code>data.reading_time</code> &mdash;
+  but <code>fitbit.bson</code> itself is absent. The finest grid available is
+  <b>1 hour</b>, so a 1&ndash;4&nbsp;h horizon is 1&ndash;4 samples.</p></div>
+  <div class="banner"><b>Sleep onset does not exist as a timestamped event.</b>
+  <p>Only per-night daily aggregates (<code>sleep_duration</code>, <code>minutesAsleep</code>,
+  <code>sleep_efficiency</code>) survive. It is not selectable as an action below.</p></div>
+  <div class="banner warn"><b>Mindfulness sessions: ${DATA.event_counts.mindfulness} event hours in the whole cohort.</b>
+  <p>Across 28 participants and ${fmt(DATA.meta.n_dense_hours)} participant-hours.</p></div>
+  <div class="banner warn"><b>These columns are daily aggregates written into one hourly row, not time series.</b>
+  <p>${dailies} &mdash; each has 0% within-day variation. They are selectable below so you can
+  watch the triple count collapse when you include them.</p></div>`;
+}
+
+/* ---------- wire up ---------- */
+function render(){
+  $("#lW").textContent = S.W + " min";
+  $("#lD").textContent = S.D + " min";
+  $("#lP").textContent = S.p.toFixed(2);
+  $("#Wh").textContent = "= " + ceilHrs() + " h of grid";
+  $("#Dh").textContent = "= " + ceilD() + " h of grid";
+  $("#evn").textContent = fmt(DATA.event_counts[S.ev]) + " event hours total";
+  const { total, per } = countTriples();
+  $("#hero").textContent = fmt(total);
+  $("#herolbl").textContent = S.ema ? "triples with a mood EMA in the post-window" : "triples";
+  $("#s_pp").textContent = per.filter(r => r.n > 0).length;
+  $("#s_pp10").textContent = per.filter(r => r.n >= 10).length;
+  $("#s_pp50").textContent = per.filter(r => r.n >= 50).length;
+  const ceil = DATA.event_counts[S.ev];
+  $("#s_ceiling").textContent = fmt(ceil);
+  $("#s_yield").textContent = ceil ? (100 * total / ceil).toFixed(0) + "%" : "-";
+  drawPP(per); drawViab(per); drawHeat(); drawGaps(); drawProp();
+}
+function init(){
+  $("#ematot").textContent = fmt(DATA.ema_total);
+  $("#daterange").textContent = DATA.meta.date_min.slice(0, 10) + " to " + DATA.meta.date_max.slice(0, 10);
+  const ev = $("#EV");
+  DATA.event_types.forEach(t => { const o = document.createElement("option");
+    o.value = t; o.textContent = t.replace(/_/g, " ") + "  (" + fmt(DATA.event_counts[t]) + ")";
+    ev.appendChild(o); });
+  const opt = document.createElement("option");
+  opt.disabled = true; opt.textContent = "sleep onset - NOT AVAILABLE"; ev.appendChild(opt);
+  ev.value = S.ev;
+  const ch = $("#CH");
+  DATA.channels.forEach(c => { const o = document.createElement("option");
+    o.value = c; const daily = DATA.meta.daily_stamped.includes(c);
+    o.textContent = (daily ? "(!) " : "") + c + (daily ? "  - DAILY aggregate" : "  - hourly");
+    o.selected = S.C.includes(c); ch.appendChild(o); });
+  const bind = (id, key, f) => $(id).addEventListener("input", e => { S[key] = f(e.target.value); render(); });
+  bind("#W", "W", Number); bind("#D", "D", Number);
+  $("#P").addEventListener("input", e => { S.p = Number(e.target.value) / 100; render(); });
+  ev.addEventListener("change", e => { S.ev = e.target.value; render(); });
+  ch.addEventListener("change", () => {
+    S.C = [...ch.selectedOptions].map(o => o.value); render(); });
+  $("#EMA").addEventListener("change", e => { S.ema = e.target.checked; render(); });
+  drawBanners(); drawGran(); render();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+}
+init();
+</script>

@@ -1,0 +1,101 @@
+source,column,dtype,grain,n_nonnull,pct_nonnull,n_unique,example,min,p50,max,frac_pdays_varying
+hourly_fitbit_sema,id,str,hourly,159508,100.0,71,621e2e8e67b776a24055b564 | 621e2eaf67b776a2406b14ac | 621e2ed667b776a24085d8d1,,,,
+hourly_fitbit_sema,date,datetime64[us],hourly,159508,100.0,283,2021-05-24 | 2021-05-25 | 2021-05-26,,,,
+hourly_fitbit_sema,hour,float64,hourly,159508,100.0,24,,0.0,11.0,23.0,0.955
+hourly_fitbit_sema,temperature,float64,hourly,74777,46.88,71729,,-10.0128477444,-1.0557719823666667,4.972183851866666,0.471
+hourly_fitbit_sema,badgeType,str,hourly,521,0.33,16,"['LIFETIME_DISTANCE'] | ['DAILY_FLOORS', 'LIFETIME_FLOORS', 'DAILY_STEPS'] | ['L",,,,
+hourly_fitbit_sema,calories,float64,hourly,159048,99.71,21642,,0.69,75.43,1139.03,0.688
+hourly_fitbit_sema,distance,float64,hourly,93133,58.39,15024,,0.0,81.5,10460.3,0.667
+hourly_fitbit_sema,activityType,str,hourly,3912,2.45,69,"['Walk'] | ['Walk', 'Walk'] | ['Sport']",,,,
+hourly_fitbit_sema,bpm,float64,hourly,96119,60.26,89909,,33.0,78.5,192.77386934673368,0.679
+hourly_fitbit_sema,mindfulness_session,object,hourly,159112,99.75,2,,0.0,0.0,1.0,0.016
+hourly_fitbit_sema,scl_avg,float64,hourly,437,0.27,432,,0.0,9.438883781425,33.46758352007143,0.0
+hourly_fitbit_sema,steps,float64,hourly,93133,58.39,4116,,0.0,116.0,9350.0,0.667
+hourly_fitbit_sema,minutes_in_default_zone_1,float64,hourly,4876,3.06,616,,0.0,125.0,1023.0,0.0
+hourly_fitbit_sema,minutes_below_default_zone_1,float64,hourly,4876,3.06,1238,,0.0,1090.5,1440.0,0.0
+hourly_fitbit_sema,minutes_in_default_zone_2,float64,hourly,4876,3.06,133,,0.0,0.0,313.0,0.0
+hourly_fitbit_sema,minutes_in_default_zone_3,float64,hourly,4876,3.06,51,,0.0,0.0,247.0,0.0
+hourly_fitbit_sema,age,str,hourly,146096,91.59,2,<30 | >=30,,,,
+hourly_fitbit_sema,gender,str,hourly,151929,95.25,2,MALE | FEMALE,,,,
+hourly_fitbit_sema,bmi,str,hourly,146096,91.59,14,,19.0,23.0,29.0,0.0
+hourly_fitbit_sema,step_goal,str,hourly,1919,1.2,9,,2000.0,7999.0,25000.0,0.0
+hourly_fitbit_sema,min_goal,float64,hourly,1919,1.2,8,,0.0,5000.0,25000.0,0.0
+hourly_fitbit_sema,max_goal,float64,hourly,1919,1.2,9,,0.0,8000.0,30000.0,0.0
+hourly_fitbit_sema,step_goal_label,str,hourly,1921,1.2,9,10000-14999 | 2000-4999 | 8000-9999,,,,
+hourly_fitbit_sema,ALERT,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.037
+hourly_fitbit_sema,HAPPY,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.068
+hourly_fitbit_sema,NEUTRAL,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.061
+hourly_fitbit_sema,RESTED/RELAXED,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.091
+hourly_fitbit_sema,SAD,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.015
+hourly_fitbit_sema,TENSE/ANXIOUS,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.054
+hourly_fitbit_sema,TIRED,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.096
+hourly_fitbit_sema,ENTERTAINMENT,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.023
+hourly_fitbit_sema,GYM,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.002
+hourly_fitbit_sema,HOME,float64,hourly,5029,3.15,2,,0.0,1.0,1.0,0.125
+hourly_fitbit_sema,HOME_OFFICE,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.024
+hourly_fitbit_sema,OTHER,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.007
+hourly_fitbit_sema,OUTDOORS,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.038
+hourly_fitbit_sema,TRANSIT,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.023
+hourly_fitbit_sema,WORK/SCHOOL,float64,hourly,5029,3.15,2,,0.0,0.0,1.0,0.06
+daily_fitbit_sema,id,str,daily,7410,100.0,71,621e2e8e67b776a24055b564 | 621e2eaf67b776a2406b14ac | 621e2ed667b776a24085d8d1,,,,
+daily_fitbit_sema,date,datetime64[us],daily,7410,100.0,283,2021-05-24 | 2021-05-25 | 2021-05-26,,,,
+daily_fitbit_sema,nightly_temperature,float64,daily,3359,45.33,3226,,25.5183333333,33.8871656687,36.6847932331,
+daily_fitbit_sema,nremhr,float64,daily,2475,33.4,2228,,0.0,63.146,92.547,
+daily_fitbit_sema,rmssd,float64,daily,2475,33.4,2284,,0.0,34.072,122.089,
+daily_fitbit_sema,spo2,float64,daily,1270,17.14,70,,89.4,95.9,100.0,
+daily_fitbit_sema,full_sleep_breathing_rate,float64,daily,2495,33.67,70,,0.0,15.0,29.8,
+daily_fitbit_sema,stress_score,float64,daily,1876,25.32,41,,0.0,75.0,94.0,
+daily_fitbit_sema,sleep_points_percentage,float64,daily,1876,25.32,19,,0.0,0.7333333333333333,1.0,
+daily_fitbit_sema,exertion_points_percentage,float64,daily,1876,25.32,23,,0.0,0.725,1.0,
+daily_fitbit_sema,responsiveness_points_percentage,float64,daily,1876,25.32,18,,0.0,0.7666666666666667,0.9666666666666668,
+daily_fitbit_sema,daily_temperature_variation,float64,daily,3304,44.59,3171,,-5.688865716967813,-1.415088508023952,3.3936171852,
+daily_fitbit_sema,badgeType,str,daily,515,6.95,16,"['LIFETIME_DISTANCE'] | ['DAILY_FLOORS', 'DAILY_STEPS', 'LIFETIME_FLOORS'] | ['L",,,,
+daily_fitbit_sema,calories,float64,daily,6660,89.88,4657,,0.69,2073.6,8387.03,
+daily_fitbit_sema,filteredDemographicVO2Max,float64,daily,4793,64.68,4626,,28.87487,45.3853,63.88177,
+daily_fitbit_sema,distance,float64,daily,4777,64.47,4545,,0.0,5208.5,29850.7,
+daily_fitbit_sema,activityType,str,daily,2213,29.87,82,"['Walk'] | ['Sport'] | ['Aerobic Workout', 'Walk']",,,,
+daily_fitbit_sema,bpm,float64,daily,4804,64.83,4799,,43.5,79.79036150717621,153.99538009239816,
+daily_fitbit_sema,lightly_active_minutes,float64,daily,7083,95.59,456,,0.0,133.0,585.0,
+daily_fitbit_sema,moderately_active_minutes,float64,daily,7083,95.59,151,,0.0,0.0,289.0,
+daily_fitbit_sema,very_active_minutes,float64,daily,7083,95.59,168,,0.0,0.0,409.0,
+daily_fitbit_sema,sedentary_minutes,float64,daily,7083,95.59,1010,,0.0,1041.0,1440.0,
+daily_fitbit_sema,mindfulness_session,object,daily,7111,95.96,2,,0.0,0.0,1.0,
+daily_fitbit_sema,scl_avg,float64,daily,380,5.13,371,,0.0,4.55858178139,35.7136154175,
+daily_fitbit_sema,resting_hr,float64,daily,4422,59.68,4256,,44.12284469604492,66.5043077468872,86.0,
+daily_fitbit_sema,sleep_duration,float64,daily,3551,47.92,558,,3600000.0,27480000.0,74460000.0,
+daily_fitbit_sema,minutesToFallAsleep,float64,daily,3551,47.92,17,,0.0,0.0,103.0,
+daily_fitbit_sema,minutesAsleep,float64,daily,3551,47.92,515,,0.0,401.0,1094.0,
+daily_fitbit_sema,minutesAwake,float64,daily,3551,47.92,133,,0.0,55.0,358.0,
+daily_fitbit_sema,minutesAfterWakeup,float64,daily,3551,47.92,33,,0.0,0.0,62.0,
+daily_fitbit_sema,sleep_efficiency,float64,daily,3551,47.92,54,,34.0,95.0,100.0,
+daily_fitbit_sema,sleep_deep_ratio,float64,daily,3294,44.45,1938,,0.0,0.9860133020344288,4.310344827586207,
+daily_fitbit_sema,sleep_wake_ratio,float64,daily,3294,44.45,1578,,0.0,0.9594594594594594,3.7083333333333335,
+daily_fitbit_sema,sleep_light_ratio,float64,daily,3294,44.45,2824,,0.0,0.9840953645734523,3.034313725490196,
+daily_fitbit_sema,sleep_rem_ratio,float64,daily,3294,44.45,2218,,0.0,0.9887002042900919,6.636363636363637,
+daily_fitbit_sema,steps,float64,daily,4777,64.47,4058,,0.0,7420.0,43112.0,
+daily_fitbit_sema,minutes_in_default_zone_1,float64,daily,4808,64.89,616,,0.0,124.5,1023.0,
+daily_fitbit_sema,minutes_below_default_zone_1,float64,daily,4808,64.89,1238,,0.0,1094.0,1440.0,
+daily_fitbit_sema,minutes_in_default_zone_2,float64,daily,4808,64.89,133,,0.0,0.0,313.0,
+daily_fitbit_sema,minutes_in_default_zone_3,float64,daily,4808,64.89,51,,0.0,0.0,247.0,
+daily_fitbit_sema,age,str,daily,6796,91.71,2,<30 | >=30,,,,
+daily_fitbit_sema,gender,str,daily,7040,95.01,2,MALE | FEMALE,,,,
+daily_fitbit_sema,bmi,str,daily,6796,91.71,14,,19.0,23.0,29.0,
+daily_fitbit_sema,step_goal,str,daily,1913,25.82,9,,2000.0,7999.0,25000.0,
+daily_fitbit_sema,min_goal,float64,daily,1913,25.82,8,,0.0,5000.0,25000.0,
+daily_fitbit_sema,max_goal,float64,daily,1913,25.82,9,,0.0,8000.0,30000.0,
+daily_fitbit_sema,step_goal_label,str,daily,1915,25.84,9,10000-14999 | 2000-4999 | 8000-9999,,,,
+daily_fitbit_sema,ALERT,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,HAPPY,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,NEUTRAL,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,RESTED/RELAXED,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,SAD,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,TENSE/ANXIOUS,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,TIRED,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,ENTERTAINMENT,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,GYM,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,HOME,float64,daily,2290,30.9,2,,0.0,1.0,1.0,
+daily_fitbit_sema,HOME_OFFICE,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,OTHER,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,OUTDOORS,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,TRANSIT,float64,daily,2290,30.9,2,,0.0,0.0,1.0,
+daily_fitbit_sema,WORK/SCHOOL,float64,daily,2290,30.9,2,,0.0,0.0,1.0,

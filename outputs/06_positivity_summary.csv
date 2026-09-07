@@ -1,0 +1,5 @@
+event_type,n_rows,n_pos,base_rate,auc_logreg,auc_gbm,auc_within_participant_median,n_participants_scored,frac_acted_in_notacted_support,frac_notacted_in_acted_support,note
+exercise_any,80929,3311,0.04091,0.7274,0.7633,0.7419,69,0.9583,0.7834,
+exercise_vigorous,80929,836,0.01033,0.8092,0.8283,0.7371,60,0.9067,0.7468,
+walk_only,80929,2489,0.03076,0.7391,0.7717,0.7399,66,0.9614,0.8205,
+mindfulness,80929,100,0.00124,0.8074,0.401,0.6103,23,0.89,0.9965,

@@ -1,0 +1,5 @@
+event_family,n_participant_hours,n_individual_labels,timestamped
+activityType (hourly bucket flag),3912,4054,NO - hour bucket only
+mindfulness_session == True,131,131,NO - hour bucket only
+badgeType (hourly),521,651,NO - hour bucket only
+sleep onset (sleep_start),0,0,ABSENT - only daily sleep aggregates exist

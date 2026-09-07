@@ -1,0 +1,5 @@
+event_type,n_events_participant_hours,n_participants_with_any,median_per_participant,max_per_participant,participant_days_with_any,total_participant_days,rate_per_participant_day
+exercise_any,3909,69,47.0,197,2213,7551,0.5177
+exercise_vigorous,1039,61,6.0,70,797,7551,0.1376
+walk_only,2871,67,28.0,172,1696,7551,0.3802
+mindfulness,131,28,0.0,39,115,7551,0.0173

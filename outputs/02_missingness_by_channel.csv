@@ -1,0 +1,11 @@
+channel,granularity,dense_slots,slot_absent_no_csv_row,row_present_but_channel_nan,channel_present,pct_present_of_dense,pct_present_given_row
+bpm,hourly,180305,20867,63364,96074,53.28,60.26
+steps,hourly,180305,20867,66344,93094,51.63,58.39
+calories,hourly,180305,20867,458,158980,88.17,99.71
+distance,hourly,180305,20867,66344,93094,51.63,58.39
+temperature,hourly,180305,20867,84687,74751,41.46,46.88
+scl_avg,daily-stamped-onto-one-hour,180305,20867,159001,437,0.24,0.27
+minutes_in_default_zone_1,daily-stamped-onto-one-hour,180305,20867,154630,4808,2.67,3.02
+minutes_below_default_zone_1,daily-stamped-onto-one-hour,180305,20867,154630,4808,2.67,3.02
+minutes_in_default_zone_2,daily-stamped-onto-one-hour,180305,20867,154630,4808,2.67,3.02
+minutes_in_default_zone_3,daily-stamped-onto-one-hour,180305,20867,154630,4808,2.67,3.02
