@@ -1,0 +1,3 @@
+person_id,cohort,year,country,organization,role,ranking_source_id,rank_of_organization
+RU-00001,A_corporate,2015,RU,Org,ceo,S1,4
+RU-00002,A_corporate,2044,RU,Org,ceo,S1,9

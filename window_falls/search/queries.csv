@@ -1,0 +1,193 @@
+family,country,language,concept,query
+person_probe,RU,ru,vital_status,{name} умер
+person_probe,RU,ru,vital_status,{name} скончался
+person_probe,RU,ru,vital_status,{name} некролог
+person_probe,RU,ru,vital_status,{name} биография
+person_probe,RU,en,vital_status,{name} died
+person_probe,RU,en,vital_status,{name} obituary
+person_probe,RU,en,vital_status,{name} death
+person_probe,RU,en,vital_status,{name} biography
+person_probe,PL,pl,vital_status,{name} zmarł
+person_probe,PL,pl,vital_status,{name} nie żyje
+person_probe,PL,pl,vital_status,{name} nekrolog
+person_probe,PL,pl,vital_status,{name} biografia
+person_probe,PL,en,vital_status,{name} died
+person_probe,PL,en,vital_status,{name} obituary
+person_probe,PL,en,vital_status,{name} death
+person_probe,PL,en,vital_status,{name} biography
+person_probe,CZ,cs,vital_status,{name} zemřel
+person_probe,CZ,cs,vital_status,{name} úmrtí
+person_probe,CZ,cs,vital_status,{name} nekrolog
+person_probe,CZ,cs,vital_status,{name} životopis
+person_probe,CZ,en,vital_status,{name} died
+person_probe,CZ,en,vital_status,{name} obituary
+person_probe,CZ,en,vital_status,{name} death
+person_probe,CZ,en,vital_status,{name} biography
+person_probe,HU,hu,vital_status,{name} meghalt
+person_probe,HU,hu,vital_status,{name} elhunyt
+person_probe,HU,hu,vital_status,{name} gyászjelentés
+person_probe,HU,hu,vital_status,{name} életrajz
+person_probe,HU,en,vital_status,{name} died
+person_probe,HU,en,vital_status,{name} obituary
+person_probe,HU,en,vital_status,{name} death
+person_probe,HU,en,vital_status,{name} biography
+person_probe,RO,ro,vital_status,{name} a murit
+person_probe,RO,ro,vital_status,{name} deces
+person_probe,RO,ro,vital_status,{name} necrolog
+person_probe,RO,ro,vital_status,{name} biografie
+person_probe,RO,en,vital_status,{name} died
+person_probe,RO,en,vital_status,{name} obituary
+person_probe,RO,en,vital_status,{name} death
+person_probe,RO,en,vital_status,{name} biography
+person_probe,KZ,kk,vital_status,{name} қайтыс болды
+person_probe,KZ,kk,vital_status,{name} өмірбаяны
+person_probe,KZ,ru,vital_status,{name} умер
+person_probe,KZ,ru,vital_status,{name} скончался
+person_probe,KZ,ru,vital_status,{name} некролог
+person_probe,KZ,ru,vital_status,{name} биография
+person_probe,KZ,en,vital_status,{name} died
+person_probe,KZ,en,vital_status,{name} obituary
+person_probe,KZ,en,vital_status,{name} death
+person_probe,KZ,en,vital_status,{name} biography
+mechanism,RU,ru,window,выпал из окна
+mechanism,RU,ru,window,выпала из окна
+mechanism,RU,ru,window,выпал через окно
+mechanism,RU,ru,window,падение из окна
+mechanism,RU,ru,balcony,выпал с балкона
+mechanism,RU,ru,balcony,упал с балкона
+mechanism,RU,ru,balcony,падение с балкона
+mechanism,RU,ru,building,упал с крыши
+mechanism,RU,ru,building,выпал из здания
+mechanism,RU,ru,building,упал с высоты
+mechanism,RU,ru,building,разбился упав с здания
+mechanism,RU,en,window,fell from a window
+mechanism,RU,en,window,fell out of a window
+mechanism,RU,en,window,fell through a window
+mechanism,RU,en,window,window fall
+mechanism,RU,en,balcony,fell from balcony
+mechanism,RU,en,balcony,fell off balcony
+mechanism,RU,en,balcony,balcony fall
+mechanism,RU,en,building,fell from building
+mechanism,RU,en,building,fell from roof
+mechanism,RU,en,building,fell from height
+mechanism,RU,en,building,plunged from building
+mechanism,RU,en,building,high-rise fall
+mechanism,PL,pl,window,wypadł z okna
+mechanism,PL,pl,window,wypadła z okna
+mechanism,PL,pl,window,wypadł przez okno
+mechanism,PL,pl,window,upadek z okna
+mechanism,PL,pl,balcony,wypadł z balkonu
+mechanism,PL,pl,balcony,spadł z balkonu
+mechanism,PL,pl,balcony,upadek z balkonu
+mechanism,PL,pl,building,spadł z dachu
+mechanism,PL,pl,building,runął z budynku
+mechanism,PL,pl,building,spadł z wysokości
+mechanism,PL,pl,building,wypadł z wieżowca
+mechanism,PL,en,window,fell from a window
+mechanism,PL,en,window,fell out of a window
+mechanism,PL,en,window,fell through a window
+mechanism,PL,en,window,window fall
+mechanism,PL,en,balcony,fell from balcony
+mechanism,PL,en,balcony,fell off balcony
+mechanism,PL,en,balcony,balcony fall
+mechanism,PL,en,building,fell from building
+mechanism,PL,en,building,fell from roof
+mechanism,PL,en,building,fell from height
+mechanism,PL,en,building,plunged from building
+mechanism,PL,en,building,high-rise fall
+mechanism,CZ,cs,window,vypadl z okna
+mechanism,CZ,cs,window,vypadla z okna
+mechanism,CZ,cs,window,vypadl oknem
+mechanism,CZ,cs,window,pád z okna
+mechanism,CZ,cs,balcony,vypadl z balkonu
+mechanism,CZ,cs,balcony,spadl z balkonu
+mechanism,CZ,cs,balcony,pád z balkonu
+mechanism,CZ,cs,building,spadl ze střechy
+mechanism,CZ,cs,building,zřítil se z budovy
+mechanism,CZ,cs,building,pád z výšky
+mechanism,CZ,cs,building,spadl z výškové budovy
+mechanism,CZ,en,window,fell from a window
+mechanism,CZ,en,window,fell out of a window
+mechanism,CZ,en,window,fell through a window
+mechanism,CZ,en,window,window fall
+mechanism,CZ,en,balcony,fell from balcony
+mechanism,CZ,en,balcony,fell off balcony
+mechanism,CZ,en,balcony,balcony fall
+mechanism,CZ,en,building,fell from building
+mechanism,CZ,en,building,fell from roof
+mechanism,CZ,en,building,fell from height
+mechanism,CZ,en,building,plunged from building
+mechanism,CZ,en,building,high-rise fall
+mechanism,HU,hu,window,kizuhant az ablakon
+mechanism,HU,hu,window,kiesett az ablakon
+mechanism,HU,hu,window,ablakból zuhant ki
+mechanism,HU,hu,balcony,leesett az erkélyről
+mechanism,HU,hu,balcony,lezuhant az erkélyről
+mechanism,HU,hu,balcony,erkélyről zuhant
+mechanism,HU,hu,building,lezuhant a tetőről
+mechanism,HU,hu,building,magasból zuhant
+mechanism,HU,hu,building,épületről zuhant le
+mechanism,HU,hu,building,kizuhant az emeletről
+mechanism,HU,en,window,fell from a window
+mechanism,HU,en,window,fell out of a window
+mechanism,HU,en,window,fell through a window
+mechanism,HU,en,window,window fall
+mechanism,HU,en,balcony,fell from balcony
+mechanism,HU,en,balcony,fell off balcony
+mechanism,HU,en,balcony,balcony fall
+mechanism,HU,en,building,fell from building
+mechanism,HU,en,building,fell from roof
+mechanism,HU,en,building,fell from height
+mechanism,HU,en,building,plunged from building
+mechanism,HU,en,building,high-rise fall
+mechanism,RO,ro,window,a căzut de la fereastră
+mechanism,RO,ro,window,a căzut pe fereastră
+mechanism,RO,ro,window,cădere de la fereastră
+mechanism,RO,ro,balcony,a căzut de pe balcon
+mechanism,RO,ro,balcony,cădere de pe balcon
+mechanism,RO,ro,building,a căzut de pe acoperiș
+mechanism,RO,ro,building,a căzut de la înălțime
+mechanism,RO,ro,building,a căzut de la etaj
+mechanism,RO,ro,building,s-a prăbușit de pe clădire
+mechanism,RO,en,window,fell from a window
+mechanism,RO,en,window,fell out of a window
+mechanism,RO,en,window,fell through a window
+mechanism,RO,en,window,window fall
+mechanism,RO,en,balcony,fell from balcony
+mechanism,RO,en,balcony,fell off balcony
+mechanism,RO,en,balcony,balcony fall
+mechanism,RO,en,building,fell from building
+mechanism,RO,en,building,fell from roof
+mechanism,RO,en,building,fell from height
+mechanism,RO,en,building,plunged from building
+mechanism,RO,en,building,high-rise fall
+mechanism,KZ,kk,window,терезеден құлап түсті
+mechanism,KZ,kk,window,терезеден құлады
+mechanism,KZ,kk,balcony,балконнан құлады
+mechanism,KZ,kk,balcony,балконнан құлап түсті
+mechanism,KZ,kk,building,шатырдан құлады
+mechanism,KZ,kk,building,биіктен құлап түсті
+mechanism,KZ,kk,building,ғимараттан құлады
+mechanism,KZ,ru,window,выпал из окна
+mechanism,KZ,ru,window,выпала из окна
+mechanism,KZ,ru,window,выпал через окно
+mechanism,KZ,ru,window,падение из окна
+mechanism,KZ,ru,balcony,выпал с балкона
+mechanism,KZ,ru,balcony,упал с балкона
+mechanism,KZ,ru,balcony,падение с балкона
+mechanism,KZ,ru,building,упал с крыши
+mechanism,KZ,ru,building,выпал из здания
+mechanism,KZ,ru,building,упал с высоты
+mechanism,KZ,ru,building,разбился упав с здания
+mechanism,KZ,en,window,fell from a window
+mechanism,KZ,en,window,fell out of a window
+mechanism,KZ,en,window,fell through a window
+mechanism,KZ,en,window,window fall
+mechanism,KZ,en,balcony,fell from balcony
+mechanism,KZ,en,balcony,fell off balcony
+mechanism,KZ,en,balcony,balcony fall
+mechanism,KZ,en,building,fell from building
+mechanism,KZ,en,building,fell from roof
+mechanism,KZ,en,building,fell from height
+mechanism,KZ,en,building,plunged from building
+mechanism,KZ,en,building,high-rise fall

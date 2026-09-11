@@ -1,0 +1,7 @@
+person_id,name,name_native,sex,birth_year,citizenship,residence_country,birth_country,elite_affiliation_country,elite_category,occupation,industry,organization,organization_state_owned,role,cohort_entry_date,cohort_exit_date,exit_reason,vital_status_2025_12_31,death_date,death_country,death_city,death_abroad,death_setting,death_mechanism,window_fall,balcony_fall,building_fall,high_place_fall,official_manner_of_death,investigation_status,media_description,evidence_of_foul_play,public_government_criticism,public_antiwar_statement,formal_opposition_activity,recent_criminal_investigation,corruption_investigation,recent_interrogation_or_arrest,recent_dismissal,state_company_role,major_state_contract,sanctions_exposure,asset_dispute,state_conflict,business_conflict,employer_conflict,source_1,source_2,source_3,coding_confidence,double_coded,notes
+RU-00001,Clean Case,,M,1960,,,,RU,corporate,,,,,ceo,2010-01-01,2022-09-01,death,dead,2022-09-01,RU,,0,,fall,1,0,1,1,undetermined,,,,,,,,,,,,,,,1,,,S1,S2,,high,,
+RU-00002,,,,,,,,RU,,,,,,,2010-01-01,2023-05-05,death,dead,2023-05-05,RU,,0,,fall,1,,0,1,,,,,,,,,,,,,,,,,,,S1,S2,,,,
+PL-00003,,,,,,,,PL,,,,,,,2010-01-01,2019-02-02,death,dead,2019-02-02,PL,,0,,fall,1,0,1,1,,,,,,,,,,,,,,,,,,,S1,,,,,
+RU-00004,,,,,,,,RU,,,,,,,2010-01-01,2021-03-03,death,dead,2021-03-03,KZ,,0,,illness,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+RU-00005,,,,,,,,RU,,,,,,,2010-01-01,2020-01-01,death,dead,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,,
+XX-00006,,,,,,,,FR,,,,,,,2008-01-01,2007-01-01,,alive,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

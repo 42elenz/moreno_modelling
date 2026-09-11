@@ -1,0 +1,4 @@
+probe_id,language,country_targeted,query,political_qualifiers_used,n_results,n_about_russian_affiliated,n_about_target_country_elite,n_target_country_nonelite_or_irrelevant,note
+P1,pl,PL,prezes spółki wypadł z okna zginął Polska giełda,none,9,7,0,2,"top hits are Lukoil / Yukos / Transneft; one Polish businessman died in a non-fall accident"
+P2,cs,CZ,generální ředitel firmy vypadl z okna zemřel Česko,none,8,4,1,3,"one genuine Czech elite case surfaced (Ceska zbrojovka director, Nuremberg 1995) - outside the 2010-2025 study window"
+P3,hu,HU,vezérigazgató kizuhant az ablakon meghalt cég Magyarország,none,9,4,0,5,"Hungarian hits are a student, a rescue-service worker, construction workers, a parachutist - no Hungarian elite case"

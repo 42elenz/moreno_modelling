@@ -1,0 +1,3 @@
+source_id,url,publication_date,accessed_date,outlet,language,source_type,country_of_outlet,title,archived_url
+S1,https://example.org/a,2022-09-01,2026-09-11,Outlet A,ru,national_news,RU,t,
+S2,https://example.org/b,2022-09-02,2026-09-11,Outlet B,en,international_news,GB,t,

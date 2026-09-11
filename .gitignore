@@ -1,3 +1,4 @@
 __pycache__/
 *.pyc
 outputs/panel.parquet
+window_falls/**/__pycache__/

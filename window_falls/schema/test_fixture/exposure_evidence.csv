@@ -1,0 +1,3 @@
+evidence_id,person_id,exposure_variable,value,event_date,source_id,published_after_death,excerpt,confidence
+E1,RU-00001,state_conflict,1,2022-01-15,S1,0,asset dispute reported,high
+E2,RU-00001,asset_dispute,1,2023-01-15,S2,0,reported later,low
