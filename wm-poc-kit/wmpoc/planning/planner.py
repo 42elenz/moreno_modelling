@@ -89,12 +89,14 @@ class WorldModelPredictor:
 
     def predict(self, s, t, actions=None):
         self.system.eval()
-        units, margin = [], []
+        units, margin, bmargin = [], [], []
         for b in self._batches(s, t, actions):
             out = self.system.predict(b)
             units.append(out["sales"][..., self.tgt].cpu().numpy())
             margin.append(out["margin"].sum((2, 3)).cpu().numpy())
-        return {"bread_units": np.concatenate(units, 1), "total_margin_4w": np.concatenate(margin, 1)}
+            bmargin.append(out["margin"][..., self.tgt].sum(2).cpu().numpy())
+        return {"bread_units": np.concatenate(units, 1), "total_margin_4w": np.concatenate(margin, 1),
+                "bread_margin_4w": np.concatenate(bmargin, 1)}
 
     def real_embedding_units(self, s, t):
         self.system.eval()

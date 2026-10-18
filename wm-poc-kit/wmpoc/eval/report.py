@@ -9,6 +9,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import matplotlib.ticker  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
@@ -64,6 +65,7 @@ def plot_training_curves(run_dir: Path) -> str | None:
                 ax.plot(ep[: len(ys)], ys, color=col, linewidth=2, marker="o", markersize=3, label=lab)
         ax.set_title(f.stem, fontsize=9)
         ax.set_xlabel("epoch", fontsize=8)
+        ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
         _style(ax)
     axes[0][0].legend(fontsize=8, frameon=False)
     fig.tight_layout()
@@ -219,6 +221,16 @@ def write_report(run_dir: Path, metrics: dict, art: dict, cfg, plots: bool = Tru
                   table(["level", "true"] + [f"{n} pred" for n in names] + [f"{n} bias" for n in names]
                         + [f"{n} RMSE" for n in names] + ["diff in means", "naive obs.", "true Δ margin 4w"]
                         + [f"{n} Δ margin 4w" for n in names], erows), ""]
+            if any("_uplift_other_margin_4w" in k for k in next(iter(r["effect"].values()))):
+                mrows = []
+                for lvl, e in r["effect"].items():
+                    for n in names:
+                        if f"{n}_uplift_bread_margin_4w" in e:
+                            mrows.append([lvl, n, e[f"{n}_uplift_bread_margin_4w"], e["true_uplift_bread_margin_4w"],
+                                          e[f"{n}_uplift_other_margin_4w"], e["true_uplift_other_margin_4w"],
+                                          e[f"{n}_uplift_total_margin_4w"], e["true_uplift_total_margin_4w"]])
+                L += ["**Margin effect split** (Δ 4-week margin vs 0 %, € per store-week: bread vs all other categories)", "",
+                      table(["level", "model", "bread pred", "bread true", "other pred", "other true", "total pred", "total true"], mrows), ""]
             het = r["heterogeneity"]
             L += ["**Heterogeneity and action sensitivity**", "",
                   table(["model", "Spearman vs true per-store uplift", "Spearman vs bread_beta", "sensitivity ratio", "ignores action"],

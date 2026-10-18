@@ -88,6 +88,7 @@ def evaluate(data: DataBundle, cfg, predictors: dict[str, Predictor], extras: Mo
             # 2. effect recovery, 3. heterogeneity, 4. action sensitivity
             true_up = {d: cf["bread_units"][m, li[d], 0] - cf["bread_units"][m, 0, 0] for d in levels[1:]}
             true_mup = {d: cf["total_margin_4w"][m, li[d]] - cf["total_margin_4w"][m, 0] for d in levels[1:]}
+            true_bup = {d: cf["bread_margin_4w"][m, li[d]] - cf["bread_margin_4w"][m, 0] for d in levels[1:]}
             dim_stores = sp.holdout_stores if sub == "cold_start_stores" else None
             dim = diff_in_means(p, dim_weeks, levels[1:], dim_stores)
             naive = gt.manifest["sanity_checks_test_period"] if split == "test" else {}
@@ -95,6 +96,8 @@ def evaluate(data: DataBundle, cfg, predictors: dict[str, Predictor], extras: Mo
             for d in levels[1:]:
                 row = {"true_uplift_bread_w0": float(true_up[d].mean()),
                        "true_uplift_total_margin_4w": float(true_mup[d].mean()),
+                       "true_uplift_bread_margin_4w": float(true_bup[d].mean()),
+                       "true_uplift_other_margin_4w": float((true_mup[d] - true_bup[d]).mean()),
                        "diff_in_means": dim[_lvl(d)]["estimate"], "diff_in_means_se": dim[_lvl(d)]["se"]}
                 if _lvl(d) in naive and sub != "cold_start_stores":
                     row["naive_observational"] = naive[_lvl(d)]["naive_observational_estimate"]
@@ -107,6 +110,11 @@ def evaluate(data: DataBundle, cfg, predictors: dict[str, Predictor], extras: Mo
                     row[f"{n}_rmse"] = float(np.sqrt(((up - true_up[d]) ** 2).mean()))
                     row[f"{n}_uplift_total_margin_4w"] = float(mup.mean())
                     row[f"{n}_margin_bias"] = float(mup.mean() - true_mup[d].mean())
+                    if "bread_margin_4w" in ro:  # split the margin effect: bread vs the other categories
+                        bm = ro["bread_margin_4w"].mean(0)
+                        bup = bm[li[d], m] - bm[0, m]
+                        row[f"{n}_uplift_bread_margin_4w"] = float(bup.mean())
+                        row[f"{n}_uplift_other_margin_4w"] = float((mup - bup).mean())
                 eff[_lvl(d)] = row
             r["effect"] = eff
             het, sens = {}, {}
