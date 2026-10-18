@@ -80,13 +80,17 @@ def run(cfg, resume: bool = False, from_stage: str | None = None) -> dict:
     if start > 0:
         prev = stages[start - 1]
         ck = torch.load(out / "checkpoints" / f"{prev}.pt", map_location=device, weights_only=False)
-        system.load_state_dict(ck["system"])
+        if prev == "pretrain":  # only the encoder exists after pretraining (portable across world models)
+            system.encoder.load_state_dict(ck["encoder"])
+        else:
+            system.load_state_dict(ck["system"])
         _log(f"resumed from checkpoint {prev}")
 
     for s in stages[start:]:
         set_seed(int(cfg.experiment.seed) + STAGES.index(s), int(cfg.experiment.threads))
         hist = RUNNERS[s](ctx)
-        torch.save({"system": system.state_dict(), "stage": s, "history": hist}, out / "checkpoints" / f"{s}.pt")
+        torch.save({"system": system.state_dict(), "encoder": system.encoder.state_dict(), "stage": s, "history": hist},
+                   out / "checkpoints" / f"{s}.pt")
     train_time = time.time() - t0
 
     predictors = {"world_model": WorldModelPredictor(system, data, device)}

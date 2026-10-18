@@ -44,6 +44,8 @@ class System(nn.Module):
     def latents(self, batch: TokenBatch, enc_grad: bool = False) -> tuple[Tensor, Tensor, Tensor]:
         """z_ctx [B,T,C,D] (context encoder, with price), z0 [B,C,D] and targets [B,H,C,D] (target space)."""
         H = self.dims.H
+        if batch.cached is not None and not enc_grad:
+            return batch.cached
         with torch.set_grad_enabled(enc_grad and torch.is_grad_enabled()):
             z_ctx = self.encoder.encode(batch.ctx_window())
         z0 = self.encoder.target_encode(batch.ctx_window(), self.target_drop)[:, -1]

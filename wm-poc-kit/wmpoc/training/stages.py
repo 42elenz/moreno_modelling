@@ -6,6 +6,7 @@ model selection), best-weights restore and a CSV log.
 """
 from __future__ import annotations
 
+import contextlib
 import copy
 import csv
 import math
@@ -40,11 +41,33 @@ class StageContext:
         default = float(w.get("default", 1.0))
         self.cat_w = torch.tensor([float(w.get(c, default)) for c in data.dims.categories], device=device)
         self.latent_kind = str(cfg.model.encoder.jepa.loss)
+        self.cache: dict[str, tuple[Tensor, ...]] | None = None
+
+    def build_cache(self) -> None:
+        """Precompute (z_ctx, z0, targets) of the frozen encoder for every train / val window.
+
+        Exactly what `System.latents` returns in eval mode, so cached and uncached training match.
+        """
+        self.system.encoder.eval()
+        self.cache = {}
+        with torch.no_grad():
+            for which, (s, o) in (("train", self.train), ("val", self.val)):
+                parts = [self.system.latents(b.to(self.device))
+                         for b in self.data.ds.iterate(s, o, 512, shuffle=False)]
+                self.cache[which] = tuple(torch.cat(p) for p in zip(*parts))
+
+    def clear_cache(self) -> None:
+        self.cache = None
 
     def batches(self, which: str, shuffle: bool, epoch: int = 0) -> Iterable[TokenBatch]:
         s, o = self.train if which == "train" else self.val
         rng = np.random.default_rng(self.seed * 7919 + epoch)
-        for b in self.data.ds.iterate(s, o, self.bs, shuffle=shuffle, rng=rng):
+        order = rng.permutation(len(s)) if shuffle else np.arange(len(s))
+        for i in range(0, len(s), self.bs):
+            j = order[i:i + self.bs]
+            b = self.data.ds.batch(s[j], o[j])
+            if self.cache is not None:
+                b.cached = tuple(c[torch.as_tensor(j)] for c in self.cache[which])
             yield b.to(self.device)
 
     def n_steps(self) -> int:
@@ -53,7 +76,7 @@ class StageContext:
 
 def fit(ctx: StageContext, name: str, train_modules: list[nn.Module], frozen_modules: list[nn.Module],
         step_fn: Callable[[TokenBatch], dict[str, Tensor]], epochs: int, lr: float, warmup_frac: float = 0.0,
-        after_step: Callable[[int, int], None] | None = None) -> list[dict]:
+        after_step: Callable[[int, int], None] | None = None, val_context=None) -> list[dict]:
     cfg = ctx.cfg
     params = [p for m in train_modules for p in m.parameters() if p.requires_grad]
     if not params or epochs <= 0:
@@ -92,12 +115,12 @@ def fit(ctx: StageContext, name: str, train_modules: list[nn.Module], frozen_mod
             for k, v in out.items():
                 sums[k] = sums.get(k, 0.0) + float(v.detach())
             if log_every > 0 and step % log_every == 0:
-                _log(f"{name} step {step}/{total} loss {float(out['loss']):.4f}")
+                _log(f"{name} step {step}/{total} loss {float(out['loss'].detach()):.4f}")
         for m in train_modules + frozen_modules:
             m.eval()
         vs: dict[str, float] = {}
         nv = 0
-        with torch.no_grad():
+        with torch.no_grad(), (val_context() if val_context else contextlib.nullcontext()):
             for batch in ctx.batches("val", shuffle=False):
                 out = step_fn(batch)
                 for k, v in out.items():
@@ -141,7 +164,8 @@ def run_pretrain(ctx: StageContext) -> list[dict]:
         _log(f"pretrain: encoder {ctx.cfg.model.encoder.type} needs no pretraining, skipped")
         return []
     return fit(ctx, "pretrain", [enc], [], lambda b: enc.pretrain_step(b.ctx_window()), int(sc.epochs),
-               float(sc.lr), float(sc.get("warmup_frac", 0.0)), after_step=enc.after_optimizer_step)
+               float(sc.lr), float(sc.get("warmup_frac", 0.0)), after_step=enc.after_optimizer_step,
+               val_context=getattr(getattr(enc, "masks", None), "fixed", None))
 
 
 # ---------------------------------------------------------------------------- stage 2
@@ -208,10 +232,15 @@ def run_world_model(ctx: StageContext) -> list[dict]:
         if et:
             train += [enc, sys_.heads[0]]
         frozen = [] if et else [enc]
+        if et:
+            ctx.clear_cache()
+        elif ctx.cache is None:
+            ctx.build_cache()
         h = fit(ctx, f"world_model_m{k}", train, frozen, wm_step(ctx, k, et), int(sc.epochs), float(sc.lr))
         for r in h:
             r["member"] = k
         hist += h
+    ctx.clear_cache()
     return hist
 
 
@@ -240,7 +269,10 @@ def run_outcome_heads(ctx: StageContext) -> list[dict]:
         out["loss"] = {"real_embeddings": l_real, "predicted_embeddings": l_pred, "both": l_real + l_pred}[mode]
         return out
 
-    return fit(ctx, "outcome_heads", [head], [sys_.encoder, sys_.world_models], step, int(sc.epochs), float(sc.lr))
+    ctx.build_cache()
+    h = fit(ctx, "outcome_heads", [head], [sys_.encoder, sys_.world_models], step, int(sc.epochs), float(sc.lr))
+    ctx.clear_cache()
+    return h
 
 
 # ---------------------------------------------------------------------------- stage 4
@@ -267,6 +299,7 @@ def run_joint_finetune(ctx: StageContext) -> list[dict]:
         return {"loss": loss, "latent": lat.detach() / sys_.K, "outcome": outc.detach() / sys_.K}
 
     train = [sys_.world_models, sys_.heads] + ([sys_.encoder] if enc_t else [])
+    ctx.clear_cache() if enc_t else ctx.build_cache()
     return fit(ctx, "joint_finetune", train, [] if enc_t else [sys_.encoder], step, int(sc.epochs), float(sc.lr))
 
 

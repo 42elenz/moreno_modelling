@@ -52,7 +52,7 @@ class TransformerWorldModel(WorldModel):
         self.use_token = cond in ("token", "adaln_and_token")
         self.use_adaln = cond in ("adaln", "adaln_and_token")
         p = lambda *s: nn.Parameter(torch.randn(*s) * 0.02)
-        self.cat, self.prefix_pos, self.step, self.type = p(C, D), p(T, D), p(H, D), p(4, D)
+        self.cat, self.prefix_pos, self.step, self.tok_type = p(C, D), p(T, D), p(H, D), p(4, D)
         self.prefix_in, self.block_in = nn.Linear(D, D), nn.Linear(D, D)
         self.act_in = mlp(dims.n_actions, D, D)
         self.kf_in = nn.Linear(dims.n_known_future, D)
@@ -74,14 +74,14 @@ class TransformerWorldModel(WorldModel):
         B, T, C, D = z_ctx.shape
         Hh = z_in.shape[1]
         dev = z_ctx.device
-        prefix = (self.prefix_in(z_ctx) + self.cat + self.prefix_pos[:T, None] + self.type[0]).reshape(B, T * C, D)
-        stat = (self.static_proj(static) + store_emb + self.type[0])[:, None]
+        prefix = (self.prefix_in(z_ctx) + self.cat + self.prefix_pos[:T, None] + self.tok_type[0]).reshape(B, T * C, D)
+        stat = (self.static_proj(static) + store_emb + self.tok_type[0])[:, None]
         a = self.act_in(actions)  # [B,Hh,D]
-        lat = self.block_in(z_in) + self.cat + self.step[:Hh, None] + self.type[1]  # [B,Hh,C,D]
+        lat = self.block_in(z_in) + self.cat + self.step[:Hh, None] + self.tok_type[1]  # [B,Hh,C,D]
         parts = [lat]
         if self.use_token:
-            parts.append((a + self.step[:Hh] + self.type[2])[:, :, None])
-        parts.append((self.kf_in(known_future) + self.step[:Hh] + self.type[3])[:, :, None])
+            parts.append((a + self.step[:Hh] + self.tok_type[2])[:, :, None])
+        parts.append((self.kf_in(known_future) + self.step[:Hh] + self.tok_type[3])[:, :, None])
         blocks = torch.cat(parts, 2)  # [B,Hh,C+e,D]
         nb = blocks.shape[2]
         x = torch.cat([prefix, stat, blocks.reshape(B, Hh * nb, D)], 1)

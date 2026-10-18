@@ -47,6 +47,7 @@ class TokenBatch:
     units: Tensor  # [B,H,C] observed sales
     margin: Tensor  # [B,H,C] observed margin
     origin: Tensor  # [B] first horizon week
+    cached: tuple[Tensor, ...] | None = None  # precomputed (z_ctx, z0, targets) of a frozen encoder
 
     @property
     def B(self) -> int:
@@ -66,7 +67,9 @@ class TokenBatch:
         return self.targets[..., HEAD_TARGETS.index(name)]
 
     def to(self, device: torch.device | str) -> "TokenBatch":
-        return replace(self, **{f.name: getattr(self, f.name).to(device) for f in fields(self)})
+        moved = {f.name: getattr(self, f.name).to(device) for f in fields(self) if f.name != "cached"}
+        cached = None if self.cached is None else tuple(c.to(device) for c in self.cached)
+        return replace(self, cached=cached, **moved)
 
     def with_actions(self, actions: Tensor) -> "TokenBatch":
         return replace(self, actions=actions)

@@ -1,6 +1,7 @@
 """Pretraining masks shared by `jepa` and `masked_ae`. One mask type is sampled per batch."""
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -28,6 +29,16 @@ class MaskSampler:
         p = np.array([float(masks_cfg[k].p) for k in self.kinds])
         self.p = p / p.sum()
         self.rng = np.random.default_rng(seed)
+
+    @contextmanager
+    def fixed(self, seed: int = 12345):
+        """Use a fixed mask sequence (validation), then restore the training stream."""
+        saved = self.rng
+        self.rng = np.random.default_rng(seed)
+        try:
+            yield
+        finally:
+            self.rng = saved
 
     def sample(self, B: int, device=None, kind: str | None = None) -> MaskSpec:
         T, C = self.dims.T, self.dims.C
