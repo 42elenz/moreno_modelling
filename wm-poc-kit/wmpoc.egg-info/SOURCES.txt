@@ -1,0 +1,6 @@
+pyproject.toml
+wmpoc.egg-info/PKG-INFO
+wmpoc.egg-info/SOURCES.txt
+wmpoc.egg-info/dependency_links.txt
+wmpoc.egg-info/requires.txt
+wmpoc.egg-info/top_level.txt

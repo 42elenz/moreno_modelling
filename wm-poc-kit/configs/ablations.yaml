@@ -1,0 +1,30 @@
+# Ablation grid for `python -m wmpoc.ablate --config configs/poc_tiny.yaml --grid configs/ablations.yaml`
+# Each run = base config + these overrides. Run with 3 seeds each and report mean ± std.
+
+seeds: [0, 1, 2]
+
+runs:
+  reference:      {}                                            # jepa + transformer world model
+
+  # Is JEPA pretraining worth it?
+  enc_masked_ae:  {model.encoder.type: masked_ae}
+  enc_supervised: {model.encoder.type: supervised, training.stages.pretrain.enabled: false,
+                   training.stages.world_model.freeze_encoder: false}
+  enc_linear:     {model.encoder.type: linear, training.stages.pretrain.enabled: false}
+  enc_random:     {model.encoder.type: random_frozen, training.stages.pretrain.enabled: false}
+
+  # Is the latent world model worth it?
+  wm_direct:      {model.world_model.type: direct}               # heads read z(t) + actions, no latent dynamics
+  wm_gru:         {model.world_model.type: gru, model.encoder.pooling: mean}
+  wm_additive:    {model.world_model.type: additive}             # z(t+1) = z(t) + f(action, known future)
+  wm_no_action:   {model.world_model.type: no_action}            # gap to reference = learned action effect
+
+  # Do the fixes from the review matter?
+  keep_price_in_targets: {model.world_model.target_drops_price: false}
+  no_rollout_loss:       {model.world_model.rollout_weight: 0.0}
+  no_bread_weighting:    {model.world_model.category_loss_weights: {default: 1.0}}
+  no_store_id:           {model.store_id_embedding.enabled: false}
+  store_id_no_dropout:   {model.store_id_embedding.dropout: 0.0}
+  observational_only:    {data.randomized_sample_weight: 0.0}    # confounding check
+  no_censoring:          {model.outcome_heads.censoring: none}
+  joint_finetune:        {training.stages.joint_finetune.enabled: true}

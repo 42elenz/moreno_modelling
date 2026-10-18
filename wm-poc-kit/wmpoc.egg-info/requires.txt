@@ -1,0 +1,11 @@
+torch>=2.2
+numpy
+pandas
+omegaconf
+lightgbm
+scikit-learn
+scipy
+matplotlib
+
+[dev]
+pytest

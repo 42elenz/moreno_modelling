@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+*.pt
+.pytest_cache/
+runs/*/checkpoints/
+runs/smoke*/
+runs/_test*/
+data_1000/

@@ -1,0 +1,28 @@
+[project]
+name = "wmpoc"
+version = "0.1.0"
+description = "Proof of concept: action-conditioned latent world model for retail discounts"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.2",
+    "numpy",
+    "pandas",
+    "omegaconf",
+    "lightgbm",
+    "scikit-learn",
+    "scipy",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["wmpoc*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

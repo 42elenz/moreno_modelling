@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: wmpoc
+Version: 0.1.0
+Summary: Proof of concept: action-conditioned latent world model for retail discounts
+Requires-Python: >=3.11
+Requires-Dist: torch>=2.2
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: omegaconf
+Requires-Dist: lightgbm
+Requires-Dist: scikit-learn
+Requires-Dist: scipy
+Requires-Dist: matplotlib
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"

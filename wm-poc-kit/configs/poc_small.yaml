@@ -1,0 +1,36 @@
+# Small GPU config. Merged on top of poc_tiny.yaml (only the overrides are listed).
+# Regenerate bigger data first:
+#   python data_gen/generate_fake_data.py --out data_1000 --n-stores 1000
+
+defaults: poc_tiny.yaml
+
+experiment:
+  name: poc_small
+  device: cuda
+
+data:
+  dir: data_1000
+  window:
+    context_weeks: 12
+
+model:
+  d_model: 128
+  encoder:
+    n_layers: 4
+    n_heads: 8
+    jepa:
+      predictor: {n_layers: 3, n_heads: 4, d_model: 96}
+  world_model:
+    n_layers: 4
+    n_heads: 8
+    ensemble_size: 5
+  outcome_heads:
+    hidden: [128, 64]
+
+training:
+  batch_size: 256
+  num_workers: 4
+  stages:
+    pretrain:    {epochs: 40}
+    world_model: {epochs: 40}
+    outcome_heads: {epochs: 20}
