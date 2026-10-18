@@ -161,6 +161,17 @@ baselines:
     enabled: true
   calendar_store_probe:
     enabled: true
+planning:
+  risk_on: uplift
+  discount_levels:
+  - 0.0
+  - 0.1
+  - 0.2
+  - 0.3
+  action_sequence: '[d, 0, 0, 0]'
+  objective: total_margin_4w
+  risk_aversion: 1.0
+  allow_untested_levels: false
 eval:
   action_ignore_threshold: 0.25
   untested_grid_step: 0.05
@@ -213,13 +224,3 @@ training:
     metric: val_loss
     patience: 5
   log_every_steps: 50
-planning:
-  discount_levels:
-  - 0.0
-  - 0.1
-  - 0.2
-  - 0.3
-  action_sequence: '[d, 0, 0, 0]'
-  objective: total_margin_4w
-  risk_aversion: 1.0
-  allow_untested_levels: false

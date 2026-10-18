@@ -53,8 +53,17 @@ def rollout_levels(pred: Predictor, s: np.ndarray, t: np.ndarray, levels: list[f
     return {k: np.stack([o[k] for o in outs], 1) for k in outs[0]}
 
 
-def choose(margin: np.ndarray, risk_aversion: float) -> tuple[np.ndarray, np.ndarray]:
-    """margin [K,L,N] -> (chosen level index [N], score [L,N]). score = mean - λ·std over members."""
+def choose(margin: np.ndarray, risk_aversion: float, risk_on: str = "uplift") -> tuple[np.ndarray, np.ndarray]:
+    """margin [K,L,N] -> (chosen level index [N], score [L,N]). score = mean - λ·std over members.
+
+    risk_on="uplift" scores each member's margin relative to its own first level (0 %), so the
+    penalty measures disagreement about the *effect* of the discount; "level" uses the raw margin,
+    whose ensemble spread is mostly shared baseline error that does not change the ranking.
+    """
+    if risk_on == "uplift":
+        margin = margin - margin[:, :1]
+    elif risk_on != "level":
+        raise ValueError(f"unknown risk_on {risk_on!r}")
     mean = margin.mean(0)
     std = margin.std(0) if margin.shape[0] > 1 else np.zeros_like(mean)
     score = mean - risk_aversion * std

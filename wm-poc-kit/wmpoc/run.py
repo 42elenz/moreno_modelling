@@ -55,7 +55,7 @@ def enabled_stages(cfg, system: System) -> list[str]:
     return out
 
 
-def run(cfg, resume: bool = False, from_stage: str | None = None) -> dict:
+def run(cfg, resume: bool = False, from_stage: str | None = None, eval_only: bool = False) -> dict:
     t0 = time.time()
     set_seed(int(cfg.experiment.seed), int(cfg.experiment.threads))
     out = Path(cfg.experiment.output_dir)
@@ -74,7 +74,7 @@ def run(cfg, resume: bool = False, from_stage: str | None = None) -> dict:
         if from_stage not in stages:
             raise ValueError(f"--from-stage {from_stage} is not an enabled stage {stages}")
         start = stages.index(from_stage)
-    elif resume:
+    elif resume or eval_only:
         done = [i for i, s in enumerate(stages) if (out / "checkpoints" / f"{s}.pt").exists()]
         start = done[-1] + 1 if done else 0
     if start > 0:
@@ -86,7 +86,10 @@ def run(cfg, resume: bool = False, from_stage: str | None = None) -> dict:
             system.load_state_dict(ck["system"])
         _log(f"resumed from checkpoint {prev}")
 
-    for s in stages[start:]:
+    if eval_only:
+        if start < len(stages):
+            raise FileNotFoundError(f"--eval-only needs checkpoints of all stages {stages} in {out / 'checkpoints'}")
+    for s in ([] if eval_only else stages[start:]):
         set_seed(int(cfg.experiment.seed) + STAGES.index(s), int(cfg.experiment.threads))
         hist = RUNNERS[s](ctx)
         torch.save({"system": system.state_dict(), "encoder": system.encoder.state_dict(), "stage": s, "history": hist},
@@ -128,9 +131,10 @@ def main() -> None:
     ap.add_argument("--config", required=True)
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--from-stage", choices=STAGES)
+    ap.add_argument("--eval-only", action="store_true", help="evaluate the saved final checkpoint, no training")
     ap.add_argument("overrides", nargs="*", help="dot.key=value overrides")
     a = ap.parse_args()
-    run(load_config(a.config, a.overrides), resume=a.resume, from_stage=a.from_stage)
+    run(load_config(a.config, a.overrides), resume=a.resume, from_stage=a.from_stage, eval_only=a.eval_only)
 
 
 if __name__ == "__main__":

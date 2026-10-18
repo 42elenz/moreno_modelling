@@ -17,6 +17,7 @@ def as_window(x: Window | TokenBatch) -> Window:
 class Encoder(nn.Module, ABC):
     requires_pretraining: bool = False  # False for supervised, linear, random_frozen
     trainable: bool = True  # random_frozen never trains
+    pretrain_early_stopping: bool = True  # False when the pretraining loss is not comparable across epochs
 
     def __init__(self, dims: Dims, cfg) -> None:
         super().__init__()

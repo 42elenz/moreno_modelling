@@ -20,6 +20,7 @@ CODE_DEFAULTS: dict[str, Any] = {
         "world_model": {"outcome_aux_weight": 1.0},  # outcome loss when the encoder trains in stage 2
     },
     "baselines": {"lightgbm": {"num_threads": 1}},
+    "planning": {"risk_on": "uplift"},  # uplift | level: what the ensemble-std penalty is computed on
     "eval": {"action_ignore_threshold": 0.25, "untested_grid_step": 0.05},
 }
 

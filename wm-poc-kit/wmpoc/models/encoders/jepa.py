@@ -45,6 +45,7 @@ class Predictor(nn.Module):
 @ENCODERS.register("jepa")
 class JEPAEncoder(Encoder):
     requires_pretraining = True
+    pretrain_early_stopping = False  # the EMA target moves, so the latent loss is no selection signal
 
     def __init__(self, dims, cfg) -> None:
         super().__init__(dims, cfg)

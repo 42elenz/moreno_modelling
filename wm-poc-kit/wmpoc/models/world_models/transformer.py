@@ -1,7 +1,7 @@
 """Block-causal transformer world model.
 
-Sequence = prefix (the T×C context embeddings + one static/store token) followed by one block
-per horizon step: C latent tokens + an action token + a known-future token. Block h attends
+Sequence = prefix (2·C context tokens: last context week and the mean over the context weeks,
+plus one static/store token) followed by one block per horizon step: C latent tokens + an action token + a known-future token. Block h attends
 to the prefix and blocks ≤ h only. Actions enter as tokens and via AdaLN on the tokens of the
 action (target) categories.
 """
@@ -18,17 +18,19 @@ class AdaLNBlock(nn.Module):
     def __init__(self, d: int, n_heads: int, dropout: float, mlp_ratio: float = 2.0) -> None:
         super().__init__()
         self.n1, self.n2 = nn.LayerNorm(d), nn.LayerNorm(d)
-        self.attn = nn.MultiheadAttention(d, n_heads, dropout=dropout, batch_first=True)
+        # no dropout on attention weights: it forces the slow attention kernel; the MLP keeps dropout
+        self.attn = nn.MultiheadAttention(d, n_heads, batch_first=True)
         h = int(d * mlp_ratio)
         self.mlp = nn.Sequential(nn.Linear(d, h), nn.GELU(), nn.Dropout(dropout), nn.Linear(h, d))
         self.mod = nn.Sequential(nn.SiLU(), nn.Linear(d, 4 * d))
         nn.init.zeros_(self.mod[-1].weight)
         nn.init.zeros_(self.mod[-1].bias)
 
-    def forward(self, x: Tensor, mask: Tensor, cond: Tensor | None, mod_mask: Tensor | None) -> Tensor:
+    def forward(self, x: Tensor, mask: Tensor, cond: Tensor | None, mod_idx: Tensor | None) -> Tensor:
+        """cond [B,M,D]: one conditioning vector per modulated token, at sequence positions mod_idx [M]."""
         g1 = b1 = g2 = b2 = None
         if cond is not None:
-            g1, b1, g2, b2 = (m * mod_mask[None, :, None] for m in self.mod(cond).chunk(4, -1))
+            g1, b1, g2, b2 = (self._scatter(m, x, mod_idx) for m in self.mod(cond).chunk(4, -1))
         h = self.n1(x)
         if g1 is not None:
             h = h * (1 + g1) + b1
@@ -37,6 +39,12 @@ class AdaLNBlock(nn.Module):
         if g2 is not None:
             h = h * (1 + g2) + b2
         return x + self.mlp(h)
+
+    @staticmethod
+    def _scatter(m: Tensor, x: Tensor, idx: Tensor) -> Tensor:
+        out = x.new_zeros(x.shape)
+        out[:, idx] = m
+        return out
 
 
 @WORLD_MODELS.register("transformer")
@@ -52,7 +60,7 @@ class TransformerWorldModel(WorldModel):
         self.use_token = cond in ("token", "adaln_and_token")
         self.use_adaln = cond in ("adaln", "adaln_and_token")
         p = lambda *s: nn.Parameter(torch.randn(*s) * 0.02)
-        self.cat, self.prefix_pos, self.step, self.tok_type = p(C, D), p(T, D), p(H, D), p(4, D)
+        self.cat, self.prefix_pos, self.step, self.tok_type = p(C, D), p(2, D), p(H, D), p(4, D)
         self.prefix_in, self.block_in = nn.Linear(D, D), nn.Linear(D, D)
         self.act_in = mlp(dims.n_actions, D, D)
         self.kf_in = nn.Linear(dims.n_known_future, D)
@@ -74,7 +82,9 @@ class TransformerWorldModel(WorldModel):
         B, T, C, D = z_ctx.shape
         Hh = z_in.shape[1]
         dev = z_ctx.device
-        prefix = (self.prefix_in(z_ctx) + self.cat + self.prefix_pos[:T, None] + self.tok_type[0]).reshape(B, T * C, D)
+        # the encoder is causal in time, so the last week already summarises the history
+        summary = torch.stack([z_ctx[:, -1], z_ctx.mean(1)], 1)  # [B,2,C,D]
+        prefix = (self.prefix_in(summary) + self.cat + self.prefix_pos[:, None] + self.tok_type[0]).reshape(B, 2 * C, D)
         stat = (self.static_proj(static) + store_emb + self.tok_type[0])[:, None]
         a = self.act_in(actions)  # [B,Hh,D]
         lat = self.block_in(z_in) + self.cat + self.step[:Hh, None] + self.tok_type[1]  # [B,Hh,C,D]
@@ -85,15 +95,15 @@ class TransformerWorldModel(WorldModel):
         blocks = torch.cat(parts, 2)  # [B,Hh,C+e,D]
         nb = blocks.shape[2]
         x = torch.cat([prefix, stat, blocks.reshape(B, Hh * nb, D)], 1)
-        n_pre = T * C + 1
+        n_pre = 2 * C + 1
         block_id = torch.cat([torch.full((n_pre,), -1, device=dev), torch.arange(Hh, device=dev).repeat_interleave(nb)])
         mask = block_id[None, :] > block_id[:, None]  # True = blocked: no attention to later blocks
-        cond = mod_mask = None
-        if self.use_adaln:
-            cond = torch.cat([x.new_zeros(B, n_pre, D), a[:, :, None].expand(B, Hh, nb, D).reshape(B, Hh * nb, D)], 1)
-            tok_is_action_cat = torch.cat([self.action_cat_mask, torch.zeros(nb - C, dtype=torch.bool, device=dev)])
-            mod_mask = torch.cat([torch.zeros(n_pre, device=dev), tok_is_action_cat.repeat(Hh).float()])
+        cond = mod_idx = None
+        if self.use_adaln:  # AdaLN only on the tokens of the action categories in each horizon block
+            cats = torch.nonzero(self.action_cat_mask).flatten()  # [nA]
+            mod_idx = (n_pre + torch.arange(Hh, device=dev)[:, None] * nb + cats[None, :]).flatten()
+            cond = a[:, :, None].expand(B, Hh, len(cats), D).reshape(B, -1, D)
         for layer in self.layers:
-            x = layer(x, mask, cond, mod_mask)
+            x = layer(x, mask, cond, mod_idx)
         out = self.norm(x[:, n_pre:]).reshape(B, Hh, nb, D)[:, :, :C]
         return z_in + self.out(out)

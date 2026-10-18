@@ -1,0 +1,1 @@
+[20:40:38] run poc_tiny: encoder=jepa wm=transformer stages=['pretrain', 'world_model', 'outcome_heads'] train windows=15810 device=cpu

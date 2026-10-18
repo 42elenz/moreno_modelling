@@ -137,7 +137,7 @@ def evaluate(data: DataBundle, cfg, predictors: dict[str, Predictor], extras: Mo
                 pl["always_10"] = float(tm[:, li[0.1]].mean())
             pl["true_best_level_share"] = {_lvl(d): float((best == i).mean()) for i, d in enumerate(levels)}
             for n, ro in roll.items():
-                idx, _ = choose(ro["total_margin_4w"][:, :, m], lam)
+                idx, _ = choose(ro["total_margin_4w"][:, :, m], lam, str(cfg.planning.risk_on))
                 val = tm[np.arange(len(idx)), idx]
                 pl[n] = {"value": float(val.mean()), "regret": float((oracle - val).mean()),
                          "oracle_match_share": float((idx == best).mean()),

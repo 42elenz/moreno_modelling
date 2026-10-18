@@ -76,7 +76,8 @@ class StageContext:
 
 def fit(ctx: StageContext, name: str, train_modules: list[nn.Module], frozen_modules: list[nn.Module],
         step_fn: Callable[[TokenBatch], dict[str, Tensor]], epochs: int, lr: float, warmup_frac: float = 0.0,
-        after_step: Callable[[int, int], None] | None = None, val_context=None) -> list[dict]:
+        after_step: Callable[[int, int], None] | None = None, val_context=None,
+        early_stopping: bool = True) -> list[dict]:
     cfg = ctx.cfg
     params = [p for m in train_modules for p in m.parameters() if p.requires_grad]
     if not params or epochs <= 0:
@@ -132,6 +133,8 @@ def fit(ctx: StageContext, name: str, train_modules: list[nn.Module], frozen_mod
         history.append(row)
         val = row.get("val_loss", float("nan"))
         _log(f"{name} epoch {epoch + 1}/{epochs} train {row.get('train_loss', float('nan')):.4f} val {val:.4f}")
+        if not early_stopping:
+            continue
         if val < best - 1e-6:
             best, bad = val, 0
             best_state = [copy.deepcopy(m.state_dict()) for m in train_modules]
@@ -165,7 +168,8 @@ def run_pretrain(ctx: StageContext) -> list[dict]:
         return []
     return fit(ctx, "pretrain", [enc], [], lambda b: enc.pretrain_step(b.ctx_window()), int(sc.epochs),
                float(sc.lr), float(sc.get("warmup_frac", 0.0)), after_step=enc.after_optimizer_step,
-               val_context=getattr(getattr(enc, "masks", None), "fixed", None))
+               val_context=getattr(getattr(enc, "masks", None), "fixed", None),
+               early_stopping=enc.pretrain_early_stopping)
 
 
 # ---------------------------------------------------------------------------- stage 2
