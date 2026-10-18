@@ -10,3 +10,4 @@ data_1000/
 runs/*.log
 runs/smoke_m3/
 runs/**/stdout.log
+runs/ablations/*/
