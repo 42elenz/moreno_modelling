@@ -7,3 +7,6 @@ runs/*/checkpoints/
 runs/smoke*/
 runs/_test*/
 data_1000/
+runs/*.log
+runs/smoke_m3/
+runs/**/stdout.log
