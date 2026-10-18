@@ -34,6 +34,7 @@ KEY_METRICS = [
     ("planning regret € (val)", ("val", "all", "planning", "world_model", "regret")),
     ("oracle match (test)", ("test", "all", "planning", "world_model", "oracle_match_share")),
     ("action sensitivity (test)", ("test", "all", "action_sensitivity", "world_model", "ratio")),
+    ("Δ margin 4w bias 10% € (test)", ("test", "all", "effect", "10%", "world_model_margin_bias")),
 ]
 
 
@@ -174,7 +175,8 @@ def write_summary(out: Path, jobs: list[dict], names: list[str]) -> None:
           "planning regret € (test)": ("test", "all", "planning", "lightgbm", "regret"),
           "planning regret € (val)": ("val", "all", "planning", "lightgbm", "regret"),
           "oracle match (test)": ("test", "all", "planning", "lightgbm", "oracle_match_share"),
-          "action sensitivity (test)": ("test", "all", "action_sensitivity", "lightgbm", "ratio")}
+          "action sensitivity (test)": ("test", "all", "action_sensitivity", "lightgbm", "ratio"),
+          "Δ margin 4w bias 10% € (test)": ("test", "all", "effect", "10%", "lightgbm_margin_bias")}
     if base and "lightgbm" in base[0]["test"]["all"]["forecast"]:
         rows.append(("**lightgbm** (baseline)", len(base), [_ms([_get(m, lg[k]) for m in base]) for k, _ in KEY_METRICS], 0))
     if base:

@@ -1,0 +1,12 @@
+# Follow-up runs (not part of the brief's grid). Same runner:
+#   python -m wmpoc.ablate --config configs/poc_tiny.yaml --grid configs/ablations_extra.yaml
+# Hypothesis from the reference run: the world model gets the bread effect right but learns a
+# confounded (negative) effect of bread discounts on the other categories from observational
+# promo weeks. If so, up-weighting the randomized weeks should move the other-category margin
+# effect towards the truth and lower planning regret on val.
+
+seeds: [0, 1, 2]
+
+runs:
+  rand_weight_10: {data.randomized_sample_weight: 10.0}
+  rand_weight_30: {data.randomized_sample_weight: 30.0}
