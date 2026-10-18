@@ -82,7 +82,7 @@ def evaluate(data: DataBundle, cfg, predictors: dict[str, Predictor], extras: Mo
             # 1. forecast
             r["forecast"] = {n: _forecast(o["bread_units"].mean(0)[m], o["total_margin_4w"].mean(0)[m], au[m], am[m], H)
                              for n, o in obs.items()}
-            if real_u is not None:
+            if real_u is not None and not np.isnan(real_u).all():
                 r["forecast"][f"{primary}_heads_on_real_embeddings"] = {
                     f"wape_bread_h{h + 1}": wape(real_u[m, h], au[m, h]) for h in range(H)}
             # 2. effect recovery, 3. heterogeneity, 4. action sensitivity

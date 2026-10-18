@@ -8,9 +8,10 @@ from __future__ import annotations
 from typing import Protocol
 
 import numpy as np
+import torch
 
 from wmpoc.baselines.lightgbm_direct import LightGBMDirect
-from wmpoc.data.features import Panel
+from wmpoc.data.features import ACTION_SCALE, Panel
 
 
 class Predictor(Protocol):
@@ -58,3 +59,45 @@ def choose(margin: np.ndarray, risk_aversion: float) -> tuple[np.ndarray, np.nda
     std = margin.std(0) if margin.shape[0] > 1 else np.zeros_like(mean)
     score = mean - risk_aversion * std
     return score.argmax(0), score
+
+
+class WorldModelPredictor:
+    """Encoder → ensemble rollouts → heads → margin, for arbitrary bread action sequences."""
+
+    name = "world_model"
+
+    def __init__(self, system, data, device: str | object = "cpu", batch_size: int = 512) -> None:
+        self.system, self.data, self.device, self.bs = system, data, device, batch_size
+        self.tgt = data.dims.target_idx
+
+    def _batches(self, s: np.ndarray, t: np.ndarray, actions: np.ndarray | None):
+        for i in range(0, len(s), self.bs):
+            b = self.data.ds.batch(s[i:i + self.bs], t[i:i + self.bs])
+            if actions is not None:
+                a = torch.as_tensor(actions[i:i + self.bs], dtype=torch.float32)[:, :, None] * ACTION_SCALE
+                b = b.with_actions(a.expand(-1, -1, b.actions.shape[-1]).contiguous())
+            yield b.to(self.device)
+
+    def predict(self, s, t, actions=None):
+        self.system.eval()
+        units, margin = [], []
+        for b in self._batches(s, t, actions):
+            out = self.system.predict(b)
+            units.append(out["sales"][..., self.tgt].cpu().numpy())
+            margin.append(out["margin"].sum((2, 3)).cpu().numpy())
+        return {"bread_units": np.concatenate(units, 1), "total_margin_4w": np.concatenate(margin, 1)}
+
+    def real_embedding_units(self, s, t):
+        self.system.eval()
+        out = [self.system.decode_real(b)["sales"][..., self.tgt].cpu().numpy() for b in self._batches(s, t, None)]
+        return np.concatenate(out, 0)
+
+    def embeddings(self, s, t):
+        """z(t): bread token and category mean of the last context week, concatenated."""
+        self.system.eval()
+        out = []
+        with torch.no_grad():
+            for b in self._batches(s, t, None):
+                z = self.system.encoder.encode(b.ctx_window())[:, -1]
+                out.append(torch.cat([z[:, self.tgt], z.mean(1)], -1).cpu().numpy())
+        return np.concatenate(out, 0)
