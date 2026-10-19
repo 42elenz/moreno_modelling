@@ -13,3 +13,6 @@ runs/**/stdout.log
 runs/ablations/*/
 runs/poc_tiny_s*/
 runs/poc_tiny_rich_s*/
+runs/**/reeval.log
+runs/*_eval.log
+runs/*_sens.log
