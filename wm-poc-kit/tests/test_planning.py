@@ -47,3 +47,30 @@ def test_experiment_finds_pull_forward_on_full_data():
     assert -0.45 < pf.share[1] < -0.2 and -0.2 < pf.share[2] < -0.03  # generator: 30 % and 10 % of the extra volume
     eff = relative_effects(d.panel, d.splits.ranges["train"], d.splits.train_stores, [0.0, 0.1, 0.2, 0.3], 4, "bread")
     assert (np.diff(eff.rel) < 0).all()  # deeper discounts cost more bread margin
+
+
+def test_calibrated_matches_experiment_on_calibration_windows(data, cfg):
+    from wmpoc.baselines.experimental_effects import slot_windows
+    from wmpoc.planning.planner import CalibratedPredictor
+
+    torch.manual_seed(0)
+    sys_ = System(data.dims, cfg, data.norm).eval()
+    for wm_ in sys_.world_models:  # make the untrained model respond to the action
+        for prm in wm_.parameters():
+            if prm.abs().sum() == 0:
+                torch.nn.init.normal_(prm, std=0.05)
+    wm = WorldModelPredictor(sys_, data)
+    p, sp, H = data.panel, data.splits, data.dims.H
+    lv = [0.0, 0.1, 0.2, 0.3]
+    eff = relative_effects(p, sp.ranges["train"], sp.train_stores, lv, H, "other")
+    pf = pull_forward(p, sp.ranges["train"], sp.train_stores, lv, H)
+    cs, ct = slot_windows(p, sp.ranges["train"], sp.train_stores, H)
+    target_u = np.array([0.0, 50.0, 120.0, 200.0])
+    cal = CalibratedPredictor(wm, eff, pf, cs, ct, target_u, np.array([0.0, 5.0, 10.0, 20.0]), lv)
+    z = cal.predict(cs, ct, plan_sequences(0.0, len(cs), H))
+    np.testing.assert_allclose(z["total_margin_4w"], wm.predict(cs, ct, plan_sequences(0.0, len(cs), H))["total_margin_4w"],
+                               rtol=1e-4, atol=1e-2)
+    for i, d in enumerate(lv[1:], start=1):
+        if 0.5 < cal.ku[i] < 2.0:  # not clipped: the mean calibrated uplift equals the experimental effect
+            o = cal.predict(cs, ct, plan_sequences(d, len(cs), H))
+            assert abs((o["bread_units"][..., 0] - z["bread_units"][..., 0]).mean() - target_u[i]) < 1e-2 * target_u[i]

@@ -152,3 +152,15 @@ def pull_forward(p: Panel, weeks: tuple[int, int], stores: np.ndarray, levels: l
     share = slope / slope[0]
     share[1:] = np.where(np.abs(slope[1:] / slope_se[1:]) >= t_min, share[1:], 0.0)
     return PullForward(list(levels), beta, se, ratio, slope, slope_se, share)
+
+
+def level_effects(p: Panel, weeks: tuple[int, int], stores: np.ndarray, levels: list[float], y: np.ndarray,
+                  H: int) -> tuple[np.ndarray, np.ndarray]:
+    """FE effect of each level on y(s, t) (an outcome per slot window, e.g. 4-week bread waste).
+
+    y: array [S, W] indexed by (store, origin). Returns (beta [L], se [L]); beta[0] = 0.
+    """
+    s, t = slot_windows(p, weeks, stores, H)
+    d = p.discount[s, t, p.action_idx[0]]
+    lvl = np.array([int(np.argmin(np.abs(np.asarray(levels) - x))) for x in d])
+    return _fe_regression(y[s, t], lvl, s, t, len(levels))

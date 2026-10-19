@@ -23,7 +23,8 @@ CODE_DEFAULTS: dict[str, Any] = {
     # risk_on: uplift | level (what the ensemble-std penalty is computed on)
     # hybrid_other_effects: also evaluate the hybrid planner (world-model bread + experimental cross-category effects)
     # structured_bread: also evaluate the hybrid with a structured bread margin (experimental pull-forward)
-    "planning": {"risk_on": "uplift", "hybrid_other_effects": True, "structured_bread": True},
+    # calibrate_bread: also evaluate the structured planner with bread uplift / waste calibrated to the experiment
+    "planning": {"risk_on": "uplift", "hybrid_other_effects": True, "structured_bread": True, "calibrate_bread": True},
     "eval": {"action_ignore_threshold": 0.25, "untested_grid_step": 0.05},
 }
 

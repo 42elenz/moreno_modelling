@@ -21,8 +21,9 @@ from wmpoc.data.windows import build_data
 from wmpoc.eval.metrics import evaluate
 from wmpoc.eval.report import write_metrics, write_report
 from wmpoc.models.system import System
-from wmpoc.baselines.experimental_effects import pull_forward, relative_effects
-from wmpoc.planning.planner import HybridPredictor, LightGBMPredictor, StructuredPredictor, WorldModelPredictor
+from wmpoc.baselines.experimental_effects import level_effects, pull_forward, relative_effects, slot_windows
+from wmpoc.planning.planner import (CalibratedPredictor, HybridPredictor, LightGBMPredictor, StructuredPredictor,
+                                    WorldModelPredictor)
 from wmpoc.training.stages import RUNNERS, STAGES, StageContext, _log
 
 
@@ -113,6 +114,17 @@ def run(cfg, resume: bool = False, from_stage: str | None = None, eval_only: boo
                               [float(x) for x in cfg.planning.discount_levels], data.dims.H)
             _log(f"experimental bread pull-forward shares (train slots): {pf.summary()}")
             predictors["world_model_structured"] = StructuredPredictor(predictors["world_model"], eff, pf)
+            if bool(cfg.planning.calibrate_bread):
+                lv = [float(x) for x in cfg.planning.discount_levels]
+                tr, st, H = data.splits.ranges["train"], data.splits.train_stores, data.dims.H
+                p, a = data.panel, data.panel.action_idx[0]
+                waste4 = np.zeros(p.units.shape[:2])
+                waste4[:, : p.n_weeks - H + 1] = sum(p.waste[:, h: p.n_weeks - H + 1 + h, a] for h in range(H))
+                wb, _ = level_effects(p, tr, st, lv, waste4, H)
+                cs, ct = slot_windows(p, tr, st, H)
+                cal = CalibratedPredictor(predictors["world_model"], eff, pf, cs, ct, pf.beta[:, 0], wb, lv)
+                _log(f"bread calibration to the experiment (train slots): {cal.summary()}")
+                predictors["world_model_calibrated"] = cal
     if bool(cfg.baselines.lightgbm.enabled):
         _log("fitting LightGBM baseline")
         predictors["lightgbm"] = LightGBMPredictor(LightGBMDirect(cfg).fit(data.panel, data.splits), data.panel)

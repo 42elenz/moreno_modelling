@@ -174,7 +174,9 @@ class StructuredPredictor(HybridPredictor):
         out = self.base.predict(s, t, actions)
         if actions is None or np.any(actions[:, 1:] != 0):
             return out  # the structure is defined for single-week plans only
-        z = self._no_discount(s, t)
+        return self._structured(s, t, actions, out, self._no_discount(s, t))
+
+    def _structured(self, s, t, actions, out, z):
         p, b, H = self.base.data.panel, self.base.tgt, self.base.data.dims.H
         wk = t[:, None] + np.arange(H)[None]
         base_price, cost = p.base_price[s[:, None], wk, b], p.unit_cost[s[:, None], wk, b]
@@ -187,3 +189,48 @@ class StructuredPredictor(HybridPredictor):
         other = (z["total_margin_4w"] - z["bread_margin_4w"]) * (1 + self.eff.at(actions[:, 0]))[None]
         return {"bread_units": units, "total_margin_4w": bread + other, "bread_margin_4w": bread,
                 "bread_waste_units": out["bread_waste_units"]}
+
+
+class CalibratedPredictor(StructuredPredictor):
+    """Structured planner whose average bread effects are calibrated to the experiment.
+
+    For each tested level d, the world model's week-0 bread uplift and its 4-week bread waste
+    change are rescaled so that their means over the training-period slot windows equal the
+    experimental estimates (store and week fixed effects) on the same windows:
+        k_u(d) = β_units,w0(d) / mean WM uplift(d),   k_w(d) = β_waste,4w(d) / mean WM Δwaste(d).
+    The world model keeps the *differences between stores*; the experiment fixes the *average*.
+    Factors are clipped to [0.5, 2] and interpolated between tested levels.
+    """
+
+    name = "world_model_calibrated"
+
+    def __init__(self, base, other_effects, pull_forward, calib_s, calib_t, units_beta, waste_beta, levels) -> None:
+        super().__init__(base, other_effects, pull_forward)
+        self.levels = np.asarray(levels, dtype=float)
+        H = base.data.dims.H
+        z = base.predict(calib_s, calib_t, np.zeros((len(calib_s), H)))
+        ku, kw = np.ones(len(levels)), np.ones(len(levels))
+        for i, d in enumerate(levels[1:], start=1):
+            o = base.predict(calib_s, calib_t, plan_sequences(d, len(calib_s), H))
+            du = (o["bread_units"][..., 0] - z["bread_units"][..., 0]).mean()
+            dw = (o["bread_waste_units"] - z["bread_waste_units"]).sum(-1).mean()
+            ku[i] = units_beta[i] / du if abs(du) > 1e-6 else 1.0
+            kw[i] = waste_beta[i] / dw if abs(dw) > 1e-6 else 1.0
+        self.ku, self.kw = np.clip(ku, 0.5, 2.0), np.clip(kw, 0.5, 2.0)
+
+    def summary(self) -> str:
+        return ", ".join(f"{d:.0%}: units ×{u:.2f} waste ×{w:.2f}" for d, u, w in zip(self.levels[1:], self.ku[1:], self.kw[1:]))
+
+    def predict(self, s, t, actions=None):
+        if actions is None or np.any(actions[:, 1:] != 0):
+            return self.base.predict(s, t, actions)
+        out = self.base.predict(s, t, actions)
+        z = self._no_discount(s, t)
+        d = actions[:, 0]
+        ku, kw = np.interp(d, self.levels, self.ku), np.interp(d, self.levels, self.kw)
+        units0 = z["bread_units"][..., 0] + ku[None] * (out["bread_units"][..., 0] - z["bread_units"][..., 0])
+        waste = z["bread_waste_units"] + kw[None, :, None] * (out["bread_waste_units"] - z["bread_waste_units"])
+        cal = dict(out, bread_waste_units=waste)
+        cal["bread_units"] = out["bread_units"].copy()
+        cal["bread_units"][..., 0] = units0
+        return self._structured(s, t, actions, cal, z)
