@@ -1,5 +1,5 @@
 experiment:
-  threads: 0
+  threads: 4
   name: poc_tiny
   seed: 0
   device: auto
@@ -163,6 +163,7 @@ baselines:
     enabled: true
 planning:
   risk_on: uplift
+  hybrid_other_effects: true
   discount_levels:
   - 0.0
   - 0.1
