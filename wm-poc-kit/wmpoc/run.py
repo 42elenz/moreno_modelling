@@ -21,8 +21,8 @@ from wmpoc.data.windows import build_data
 from wmpoc.eval.metrics import evaluate
 from wmpoc.eval.report import write_metrics, write_report
 from wmpoc.models.system import System
-from wmpoc.baselines.experimental_effects import relative_effects
-from wmpoc.planning.planner import HybridPredictor, LightGBMPredictor, WorldModelPredictor
+from wmpoc.baselines.experimental_effects import pull_forward, relative_effects
+from wmpoc.planning.planner import HybridPredictor, LightGBMPredictor, StructuredPredictor, WorldModelPredictor
 from wmpoc.training.stages import RUNNERS, STAGES, StageContext, _log
 
 
@@ -108,6 +108,11 @@ def run(cfg, resume: bool = False, from_stage: str | None = None, eval_only: boo
         _log("experimental other-category effects (train slots): "
              + ", ".join(f"{d:.0%} {r:+.2%} ± {e:.2%}" for d, r, e in zip(eff.levels, eff.rel, eff.se)))
         predictors["world_model_hybrid"] = HybridPredictor(predictors["world_model"], eff)
+        if bool(cfg.planning.structured_bread):
+            pf = pull_forward(data.panel, data.splits.ranges["train"], data.splits.train_stores,
+                              [float(x) for x in cfg.planning.discount_levels], data.dims.H)
+            _log(f"experimental bread pull-forward shares (train slots): {pf.summary()}")
+            predictors["world_model_structured"] = StructuredPredictor(predictors["world_model"], eff, pf)
     if bool(cfg.baselines.lightgbm.enabled):
         _log("fitting LightGBM baseline")
         predictors["lightgbm"] = LightGBMPredictor(LightGBMDirect(cfg).fit(data.panel, data.splits), data.panel)

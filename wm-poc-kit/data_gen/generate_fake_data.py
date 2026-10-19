@@ -50,7 +50,9 @@ EXPERIMENT_WINDOWS = [(30, 50), (80, 100), (110, 126), (132, 152)]  # [start, en
 OPEN_HOURS = 78.0
 
 
-def make_world(n_stores: int, n_weeks: int, rng: np.random.Generator) -> dict:
+def make_world(n_stores: int, n_weeks: int, rng: np.random.Generator, cohort_frac: float = 0.5,
+               windows: list[tuple[int, int]] | None = None) -> dict:
+    windows = EXPERIMENT_WINDOWS if windows is None else windows
     S, W, C = n_stores, n_weeks, len(CATS)
     n_regions = 6
     w = np.arange(W)
@@ -70,7 +72,7 @@ def make_world(n_stores: int, n_weeks: int, rng: np.random.Generator) -> dict:
     halo = np.clip(rng.normal(0.25, 0.08, S), 0.05, 0.5)
     base_ff = 6000 * (size / 1200) ** 0.8 * np.exp(0.15 * urban) * rng.lognormal(0, 0.2, S)
     affinity = np.exp(rng.normal(0, 0.12, (S, C)) + urban[:, None] * URBAN_MIX[None, :])
-    cohort = rng.random(S) < 0.5
+    cohort = rng.random(S) < cohort_frac
 
     # ---------------- calendar per region
     xmas = np.isin(woy, [51, 52]).astype(float) * np.where(woy == 51, 1.0, 0.6)
@@ -117,7 +119,7 @@ def make_world(n_stores: int, n_weeks: int, rng: np.random.Generator) -> dict:
     randomized = np.zeros((S, W), dtype=int)
     slot = np.zeros((S, W), dtype=int)  # 1 = this week's bread discount was drawn at random
     in_window = np.zeros(W, dtype=bool)
-    for a, b in EXPERIMENT_WINDOWS:
+    for a, b in windows:
         in_window[a:min(b, W)] = True
     flyer = np.zeros(W, dtype=bool)  # national bread flyer weeks, chosen near holidays
     for y in range(int(year.max()) + 1):
@@ -131,7 +133,7 @@ def make_world(n_stores: int, n_weeks: int, rng: np.random.Generator) -> dict:
         for i in range(W):
             if cohort[s] and in_window[i]:
                 randomized[s, i] = 1
-                start = max(a for a, b in EXPERIMENT_WINDOWS if a <= i)
+                start = max(a for a, b in windows if a <= i)
                 if (i - start + sw_off[s]) % 3 == 0:
                     slot[s, i] = 1
                     disc[s, i, BREAD] = rng.choice(LEVELS)
@@ -252,11 +254,15 @@ def main() -> None:
     ap.add_argument("--n-weeks", type=int, default=156)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--cf-from-week", type=int, default=104, help="first week with ground-truth counterfactuals")
+    ap.add_argument("--cohort-frac", type=float, default=0.5, help="share of stores in the switchback experiment")
+    ap.add_argument("--experiment-windows", default="30-50,80-100,110-126,132-152",
+                    help="comma-separated [start-end) week ranges of the experiment")
     a = ap.parse_args()
     out = Path(a.out)
     (out / "ground_truth").mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(a.seed)
-    m = make_world(a.n_stores, a.n_weeks, rng)
+    windows = [tuple(int(x) for x in w.split("-")) for w in a.experiment_windows.split(",")]
+    m = make_world(a.n_stores, a.n_weeks, rng, a.cohort_frac, windows)
     r = simulate(m, m["disc"])
     S, W, C = m["S"], m["W"], m["C"]
 
@@ -340,7 +346,8 @@ def main() -> None:
     share_censored = float((r["demand"][:, :, BREAD] > r["stock"][:, :, BREAD]).mean())
     manifest = {
         "seed": a.seed, "n_stores": S, "n_weeks": W, "categories": CATS,
-        "discount_levels": LEVELS.tolist(), "experiment_windows": EXPERIMENT_WINDOWS,
+        "discount_levels": LEVELS.tolist(), "experiment_windows": [list(w) for w in windows],
+        "cohort_frac": a.cohort_frac,
         "suggested_split": {"train": [0, 104], "val": [104, 130], "test": [130, W]},
         "counterfactual_policy": "bread discount d in week t, 0 in weeks t+1..t+3, all else as observed",
         "bread_weeks_censored_share": round(share_censored, 3),

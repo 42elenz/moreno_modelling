@@ -1,0 +1,70 @@
+{
+  "seed": 7,
+  "n_stores": 200,
+  "n_weeks": 156,
+  "categories": [
+    "bread",
+    "rolls",
+    "dairy",
+    "spreads",
+    "produce",
+    "drinks",
+    "snacks",
+    "household"
+  ],
+  "discount_levels": [
+    0.0,
+    0.1,
+    0.2,
+    0.3
+  ],
+  "experiment_windows": [
+    [
+      10,
+      154
+    ]
+  ],
+  "cohort_frac": 0.9,
+  "suggested_split": {
+    "train": [
+      0,
+      104
+    ],
+    "val": [
+      104,
+      130
+    ],
+    "test": [
+      130,
+      156
+    ]
+  },
+  "counterfactual_policy": "bread discount d in week t, 0 in weeks t+1..t+3, all else as observed",
+  "bread_weeks_censored_share": 0.104,
+  "sanity_checks_test_period": {
+    "10%": {
+      "true_ate_bread_units_week0": 312.3,
+      "diff_in_means_randomized_test": 323.8,
+      "diff_in_means_se": 57.1,
+      "naive_observational_estimate": 337.5,
+      "true_ate_total_margin_4w_eur": -72.5,
+      "n_randomized_test_slots": 360
+    },
+    "20%": {
+      "true_ate_bread_units_week0": 666.4,
+      "diff_in_means_randomized_test": 634.6,
+      "diff_in_means_se": 60.0,
+      "naive_observational_estimate": 1163.2,
+      "true_ate_total_margin_4w_eur": -250.8,
+      "n_randomized_test_slots": 379
+    },
+    "30%": {
+      "true_ate_bread_units_week0": 1067.5,
+      "diff_in_means_randomized_test": 1015.7,
+      "diff_in_means_se": 72.2,
+      "naive_observational_estimate": 1167.0,
+      "true_ate_total_margin_4w_eur": -555.7,
+      "n_randomized_test_slots": 369
+    }
+  }
+}

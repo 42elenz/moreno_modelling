@@ -15,9 +15,9 @@ import numpy as np  # noqa: E402
 
 # reference categorical palette, slots 1-3 (validated all-pairs), plus neutral ink for truth
 BLUE, ORANGE, AQUA, VIOLET, INK, MUTED = "#2a78d6", "#eb6834", "#1baf7a", "#6250d6", "#0b0b0b", "#8a8984"
-SERIES = {"world_model": BLUE, "lightgbm": ORANGE, "world_model_hybrid": VIOLET}
-MODELS = ("world_model", "world_model_hybrid", "lightgbm")
-SAME_BREAD = {"world_model_hybrid"}  # bread predictions identical to world_model: left out of bread-only plots
+SERIES = {"world_model": BLUE, "lightgbm": ORANGE, "world_model_hybrid": VIOLET, "world_model_structured": AQUA}
+MODELS = ("world_model", "world_model_hybrid", "world_model_structured", "lightgbm")
+SAME_BREAD = {"world_model_hybrid", "world_model_structured"}  # bread predictions identical to world_model: left out of bread-only plots
 
 
 def _style(ax) -> None:
@@ -184,7 +184,7 @@ def write_report(run_dir: Path, metrics: dict, art: dict, cfg, plots: bool = Tru
     if t:
         pl = t["planning"]
         label = {"world_model": "world model", "world_model_hybrid": "hybrid (WM bread + experimental cross effects)",
-                 "lightgbm": "LightGBM"}
+                 "world_model_structured": "structured (hybrid + experimental pull-forward)", "lightgbm": "LightGBM"}
         cands = {label[n]: pl[n]["regret"] for n in MODELS if n in pl}
         cands.update({"never discount": pl.get("never_discount_regret"), "always 10%": pl.get("always_10_regret")})
         cands = {k: v for k, v in cands.items() if v is not None}

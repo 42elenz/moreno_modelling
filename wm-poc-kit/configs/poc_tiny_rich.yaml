@@ -1,0 +1,11 @@
+# poc_tiny on the richer synthetic panel: 90 % of stores in the switchback experiment,
+# experiment running in weeks 10-153 (about 3.4x the randomized slot weeks of `data/`).
+#   python data_gen/generate_fake_data.py --out data_rich --cohort-frac 0.9 --experiment-windows 10-154
+
+defaults: poc_tiny.yaml
+
+experiment:
+  name: poc_tiny_rich
+
+data:
+  dir: data_rich

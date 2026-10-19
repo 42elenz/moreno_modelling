@@ -89,14 +89,15 @@ class WorldModelPredictor:
 
     def predict(self, s, t, actions=None):
         self.system.eval()
-        units, margin, bmargin = [], [], []
+        units, waste, margin, bmargin = [], [], [], []
         for b in self._batches(s, t, actions):
             out = self.system.predict(b)
             units.append(out["sales"][..., self.tgt].cpu().numpy())
+            waste.append(out["waste_units"][..., self.tgt].cpu().numpy())
             margin.append(out["margin"].sum((2, 3)).cpu().numpy())
             bmargin.append(out["margin"][..., self.tgt].sum(2).cpu().numpy())
         return {"bread_units": np.concatenate(units, 1), "total_margin_4w": np.concatenate(margin, 1),
-                "bread_margin_4w": np.concatenate(bmargin, 1)}
+                "bread_margin_4w": np.concatenate(bmargin, 1), "bread_waste_units": np.concatenate(waste, 1)}
 
     def real_embedding_units(self, s, t):
         self.system.eval()
@@ -147,3 +148,42 @@ class HybridPredictor:
         other = other0 * (1 + self.eff.at(actions[:, 0]))[None]
         return {"bread_units": out["bread_units"], "total_margin_4w": out["bread_margin_4w"] + other,
                 "bread_margin_4w": out["bread_margin_4w"]}
+
+
+class StructuredPredictor(HybridPredictor):
+    """Hybrid plus a structured bread margin (the fix for the pull-forward error).
+
+    For a plan [d, 0, 0, 0]:
+      week 0      bread sales and waste from the world model under the plan;
+      weeks 1..3  bread sales = world-model no-discount sales + share_h × (week-0 uplift), where
+                  share_h is the pull-forward pattern estimated from the randomized slots
+                  (`baselines.experimental_effects.pull_forward`); waste from the world model;
+      bread margin = Σ_h (net price − unit cost) · sales − unit cost · waste, with known prices;
+      other categories as in `HybridPredictor`.
+    The world model supplies what it predicts well (store-specific week-0 uplift, waste, the
+    no-discount baseline); the experiment supplies the two effects it gets wrong.
+    """
+
+    name = "world_model_structured"
+
+    def __init__(self, base: WorldModelPredictor, other_effects, pull_forward) -> None:
+        super().__init__(base, other_effects)
+        self.pf = pull_forward
+
+    def predict(self, s, t, actions=None):
+        out = self.base.predict(s, t, actions)
+        if actions is None or np.any(actions[:, 1:] != 0):
+            return out  # the structure is defined for single-week plans only
+        z = self._no_discount(s, t)
+        p, b, H = self.base.data.panel, self.base.tgt, self.base.data.dims.H
+        wk = t[:, None] + np.arange(H)[None]
+        base_price, cost = p.base_price[s[:, None], wk, b], p.unit_cost[s[:, None], wk, b]
+        net = base_price * (1 - actions)
+        u0 = out["bread_units"][..., 0] - z["bread_units"][..., 0]  # [K,N] week-0 uplift
+        units = z["bread_units"].copy()
+        units[..., 0] = out["bread_units"][..., 0]
+        units[..., 1:] += self.pf.share[None, None, 1:H] * u0[..., None]
+        bread = ((net - cost)[None] * units - cost[None] * out["bread_waste_units"]).sum(-1)
+        other = (z["total_margin_4w"] - z["bread_margin_4w"]) * (1 + self.eff.at(actions[:, 0]))[None]
+        return {"bread_units": units, "total_margin_4w": bread + other, "bread_margin_4w": bread,
+                "bread_waste_units": out["bread_waste_units"]}

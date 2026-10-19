@@ -77,3 +77,78 @@ def relative_effects(p: Panel, weeks: tuple[int, int], stores: np.ndarray, level
     se = np.concatenate([[0.0], np.sqrt(np.diag(cov)[: L - 1])])
     n = np.array([(lvl == j).sum() for j in range(L)])
     return RelativeEffects(list(levels), np.exp(b) - 1, se, n)
+
+
+@dataclass
+class PullForward:
+    """Bread units in horizon weeks h = 0..H-1 after a randomized slot at level d, relative to 0 %."""
+
+    levels: list[float]
+    beta: np.ndarray  # [L,H] unit effect of level d in week h (beta[0] = 0)
+    se: np.ndarray  # [L,H]
+    ratio: np.ndarray  # [L,H] beta[d,h] / beta[d,0]: share of the week-0 uplift gained (+) or lost (−) in week h
+    slope: np.ndarray  # [H] units per unit of discount fraction in week h (FE regression on the continuous level)
+    slope_se: np.ndarray  # [H]
+    share: np.ndarray  # [H] pooled share slope[h] / slope[0]; 0 where the slope is not significant (|t| < t_min)
+
+    def summary(self) -> str:
+        return ", ".join(f"w{h} {r:+.3f} (t {sl / se:+.1f})" if se > 0 else f"w{h} {r:+.3f}"
+                         for h, (r, sl, se) in enumerate(zip(self.share, self.slope, self.slope_se)))
+
+
+def _fe_regression(y: np.ndarray, lvl: np.ndarray, s: np.ndarray, t: np.ndarray, L: int) -> tuple[np.ndarray, np.ndarray]:
+    us, si = np.unique(s, return_inverse=True)
+    ut, ti = np.unique(t, return_inverse=True)
+    X = np.zeros((len(y), (L - 1) + len(us) + len(ut) - 1))
+    for j in range(1, L):
+        X[lvl == j, j - 1] = 1.0
+    X[np.arange(len(y)), (L - 1) + si] = 1.0
+    wk = ti > 0
+    X[np.nonzero(wk)[0], (L - 1) + len(us) + ti[wk] - 1] = 1.0
+    beta, *_ = np.linalg.lstsq(X, y, rcond=None)
+    resid = y - X @ beta
+    sigma2 = resid @ resid / max(len(y) - np.linalg.matrix_rank(X), 1)
+    se = np.sqrt(np.diag(sigma2 * np.linalg.pinv(X.T @ X))[: L - 1])
+    return np.concatenate([[0.0], beta[: L - 1]]), np.concatenate([[0.0], se])
+
+
+def _fe_slope(y: np.ndarray, x: np.ndarray, s: np.ndarray, t: np.ndarray) -> tuple[float, float]:
+    """Slope of y on x with store and week fixed effects (Frisch–Waugh: demean x and y on both FEs)."""
+    us, si = np.unique(s, return_inverse=True)
+    ut, ti = np.unique(t, return_inverse=True)
+    F = np.zeros((len(y), len(us) + len(ut) - 1))
+    F[np.arange(len(y)), si] = 1.0
+    wk = ti > 0
+    F[np.nonzero(wk)[0], len(us) + ti[wk] - 1] = 1.0
+    proj = lambda v: v - F @ np.linalg.lstsq(F, v, rcond=None)[0]
+    xr, yr = proj(x), proj(y)
+    b = float(xr @ yr / (xr @ xr))
+    resid = yr - b * xr
+    dof = max(len(y) - F.shape[1] - 1, 1)
+    return b, float(np.sqrt(resid @ resid / dof / (xr @ xr)))
+
+
+def pull_forward(p: Panel, weeks: tuple[int, int], stores: np.ndarray, levels: list[float], H: int,
+                 t_min: float = 2.0) -> PullForward:
+    """Unit effects of a randomized bread slot on bread sales in each of the next H weeks.
+
+    Per-level effects share one reference group (the 0 % slots), so their noise is correlated; the
+    pooled `share` uses the slope on the continuous discount instead and keeps only weeks whose
+    slope is significant, so noise in late weeks is not mistaken for a pull-forward effect.
+    """
+    s, t = slot_windows(p, weeks, stores, H)
+    act = p.action_idx[0]
+    d = p.discount[s, t, act]
+    lvl = np.array([int(np.argmin(np.abs(np.asarray(levels) - x))) for x in d])
+    L = len(levels)
+    beta, se = np.zeros((L, H)), np.zeros((L, H))
+    for h in range(H):
+        beta[:, h], se[:, h] = _fe_regression(p.units[s, t + h, act], lvl, s, t, L)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ratio = np.where(beta[:, :1] != 0, beta / beta[:, :1], 0.0)
+    slope, slope_se = np.zeros(H), np.zeros(H)
+    for h in range(H):
+        slope[h], slope_se[h] = _fe_slope(p.units[s, t + h, act], d, s, t)
+    share = slope / slope[0]
+    share[1:] = np.where(np.abs(slope[1:] / slope_se[1:]) >= t_min, share[1:], 0.0)
+    return PullForward(list(levels), beta, se, ratio, slope, slope_se, share)
