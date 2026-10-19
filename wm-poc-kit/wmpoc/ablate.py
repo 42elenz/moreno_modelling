@@ -7,7 +7,8 @@ Every grid entry runs for every seed (`runs/ablations/<run>/seed<k>/`). Runs who
 configuration is identical share one pretraining checkpoint: the first such run pretrains, the
 others start at the world-model stage from a copy of its encoder (bit-identical to pretraining
 again, because every stage reseeds). Finished runs (metrics.json present) are skipped, so the
-command can be re-run to resume. Writes `runs/ablations/summary.md`.
+command can be re-run to resume. Writes `runs/ablations/summary.md` (`summary_<grid>.md` for other grids),
+covering every entry of the grid that has finished runs, whatever `--runs` selected.
 """
 from __future__ import annotations
 
@@ -142,7 +143,8 @@ def main() -> None:
         if any(rcs):
             print(f"{sum(r != 0 for r in rcs)} runs failed; see their stdout.log", flush=True)
 
-    write_summary(out, jobs, names)
+    stem = Path(a.grid).stem
+    write_summary(out, list(grid["runs"]), "summary" if stem == "ablations" else f"summary_{stem.removeprefix('ablations_')}")
 
 
 def _ms(vals: list[float]) -> tuple[float, float, int]:
@@ -159,12 +161,11 @@ def _cell(m: float, s: float) -> str:
     return f"{m:.{nd}f} ± {s:.{nd}f}"
 
 
-def write_summary(out: Path, jobs: list[dict], names: list[str]) -> None:
+def write_summary(out: Path, names: list[str], fname: str = "summary") -> None:
     metrics = {}
-    for j in jobs:
-        p = j["dir"] / "metrics.json"
-        if p.exists():
-            metrics[(j["name"], j["seed"])] = json.loads(p.read_text())
+    for name in names:
+        for p in sorted((out / name).glob("seed*/metrics.json")):
+            metrics[(name, p.parent.name)] = json.loads(p.read_text())
     rows = []
     for name in names:
         ms = [m for (n, _), m in metrics.items() if n == name]
@@ -206,11 +207,11 @@ def write_summary(out: Path, jobs: list[dict], names: list[str]) -> None:
          "| " + " | ".join(hdr) + " |", "|" + "|".join("---" for _ in hdr) + "|"]
     for name, n, cells, ign in rows:
         L.append("| " + " | ".join([name, str(n)] + [_cell(m, s) for m, s, _ in cells] + [str(ign) if not name.startswith("**") else "–"]) + " |")
-    (out / "summary.md").write_text("\n".join(L) + "\n")
-    (out / "summary.json").write_text(json.dumps(
+    (out / f"{fname}.md").write_text("\n".join(L) + "\n")
+    (out / f"{fname}.json").write_text(json.dumps(
         [{"run": r[0], "seeds": r[1], **{k: {"mean": c[0], "std": c[1]} for (k, _), c in zip(KEY_METRICS, r[2])}} for r in rows],
         indent=2, default=lambda x: None))
-    print(f"wrote {out / 'summary.md'}", flush=True)
+    print(f"wrote {out / (fname + '.md')}", flush=True)
 
 
 if __name__ == "__main__":

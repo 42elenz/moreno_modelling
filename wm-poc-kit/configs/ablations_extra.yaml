@@ -8,5 +8,6 @@
 seeds: [0, 1, 2]
 
 runs:
+  reference:      {}                   # same runs as the main grid (already finished, skipped)
   rand_weight_10: {data.randomized_sample_weight: 10.0}
   rand_weight_30: {data.randomized_sample_weight: 30.0}

@@ -1,0 +1,254 @@
+[
+  {
+    "run": "**oracle**",
+    "seeds": 3,
+    "test WAPE bread h1": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "ATE bias 20% (test randomized)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "CATE Spearman (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "planning regret \u20ac (test)": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "planning regret \u20ac (val)": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "oracle match (test)": {
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "action sensitivity (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "\u0394 margin 4w bias 10% \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    }
+  },
+  {
+    "run": "**never discount**",
+    "seeds": 3,
+    "test WAPE bread h1": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "ATE bias 20% (test randomized)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "CATE Spearman (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "planning regret \u20ac (test)": {
+      "mean": 38.32392782608076,
+      "std": 0.0
+    },
+    "planning regret \u20ac (val)": {
+      "mean": 37.66051434783003,
+      "std": 0.0
+    },
+    "oracle match (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "action sensitivity (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "\u0394 margin 4w bias 10% \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    }
+  },
+  {
+    "run": "reference",
+    "seeds": 3,
+    "test WAPE bread h1": {
+      "mean": 0.09870865070520247,
+      "std": 0.000651320739796211
+    },
+    "ATE bias 20% (test randomized)": {
+      "mean": -7.220577905035081,
+      "std": 25.703861294532366
+    },
+    "CATE Spearman (test)": {
+      "mean": 0.8819084591430711,
+      "std": 0.009427251997122636
+    },
+    "planning regret \u20ac (test)": {
+      "mean": 66.24681528985506,
+      "std": 10.275043227156559
+    },
+    "planning regret \u20ac (val)": {
+      "mean": 60.26054862318841,
+      "std": 11.90155640912346
+    },
+    "oracle match (test)": {
+      "mean": 0.5960144927536232,
+      "std": 0.033199241949727475
+    },
+    "action sensitivity (test)": {
+      "mean": 0.9557212152859692,
+      "std": 0.05271680854736613
+    },
+    "\u0394 margin 4w bias 10% \u20ac (test)": {
+      "mean": -56.39592099094551,
+      "std": 81.5239289177345
+    }
+  },
+  {
+    "run": "rand_weight_30",
+    "seeds": 1,
+    "test WAPE bread h1": {
+      "mean": 0.10267711774148897,
+      "std": 0.0
+    },
+    "ATE bias 20% (test randomized)": {
+      "mean": 22.741559953037836,
+      "std": 0.0
+    },
+    "CATE Spearman (test)": {
+      "mean": 0.8522694459384728,
+      "std": 0.0
+    },
+    "planning regret \u20ac (test)": {
+      "mean": 79.61213630434784,
+      "std": 0.0
+    },
+    "planning regret \u20ac (val)": {
+      "mean": 69.56941369565217,
+      "std": 0.0
+    },
+    "oracle match (test)": {
+      "mean": 0.47630434782608694,
+      "std": 0.0
+    },
+    "action sensitivity (test)": {
+      "mean": 0.945921906293466,
+      "std": 0.0
+    },
+    "\u0394 margin 4w bias 10% \u20ac (test)": {
+      "mean": 129.69735980129082,
+      "std": 0.0
+    }
+  },
+  {
+    "run": "rand_weight_10",
+    "seeds": 1,
+    "test WAPE bread h1": {
+      "mean": 0.1000602796187102,
+      "std": 0.0
+    },
+    "ATE bias 20% (test randomized)": {
+      "mean": 16.953351945225336,
+      "std": 0.0
+    },
+    "CATE Spearman (test)": {
+      "mean": 0.8625439605072257,
+      "std": 0.0
+    },
+    "planning regret \u20ac (test)": {
+      "mean": 79.78607913043477,
+      "std": 0.0
+    },
+    "planning regret \u20ac (val)": {
+      "mean": 62.65998456521739,
+      "std": 0.0
+    },
+    "oracle match (test)": {
+      "mean": 0.4969565217391304,
+      "std": 0.0
+    },
+    "action sensitivity (test)": {
+      "mean": 0.9572620904025486,
+      "std": 0.0
+    },
+    "\u0394 margin 4w bias 10% \u20ac (test)": {
+      "mean": 94.60738253688652,
+      "std": 0.0
+    }
+  },
+  {
+    "run": "**always 10%**",
+    "seeds": 3,
+    "test WAPE bread h1": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "ATE bias 20% (test randomized)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "CATE Spearman (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "planning regret \u20ac (test)": {
+      "mean": 98.67448586956743,
+      "std": 0.0
+    },
+    "planning regret \u20ac (val)": {
+      "mean": 95.563718043486,
+      "std": 0.0
+    },
+    "oracle match (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "action sensitivity (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "\u0394 margin 4w bias 10% \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    }
+  },
+  {
+    "run": "**lightgbm** (baseline)",
+    "seeds": 3,
+    "test WAPE bread h1": {
+      "mean": 0.08054747813985809,
+      "std": 0.0002530872436138412
+    },
+    "ATE bias 20% (test randomized)": {
+      "mean": 40.74677297776577,
+      "std": 2.9408665280811093
+    },
+    "CATE Spearman (test)": {
+      "mean": 0.8928742415119703,
+      "std": 0.005595652091120005
+    },
+    "planning regret \u20ac (test)": {
+      "mean": 102.9384197101449,
+      "std": 5.858165651549959
+    },
+    "planning regret \u20ac (val)": {
+      "mean": 76.22991384057971,
+      "std": 10.870786734450945
+    },
+    "oracle match (test)": {
+      "mean": 0.5122463768115942,
+      "std": 0.018604851966575093
+    },
+    "action sensitivity (test)": {
+      "mean": 0.9436829775693627,
+      "std": 0.008235425221727186
+    },
+    "\u0394 margin 4w bias 10% \u20ac (test)": {
+      "mean": -15.988312004837029,
+      "std": 6.605004688141443
+    }
+  }
+]
