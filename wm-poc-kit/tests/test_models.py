@@ -23,7 +23,7 @@ def test_registries_complete():
 
 
 @pytest.mark.parametrize("enc", ["jepa", "masked_ae", "supervised", "linear", "random_frozen"])
-@pytest.mark.parametrize("wm", ["transformer", "gru", "additive", "direct", "no_action"])
+@pytest.mark.parametrize("wm", ["transformer", "gru", "additive", "direct", "no_action", "randomized_effect"])
 def test_shapes_every_combination(data, enc, wm):
     cfg = tiny_cfg(**{"model.encoder.type": enc, "model.world_model.type": wm, "model.world_model.ensemble_size": 2})
     sys_ = System(data.dims, cfg, data.norm)
@@ -49,7 +49,7 @@ def test_shapes_every_combination(data, enc, wm):
     assert torch.isfinite(loss)
 
 
-@pytest.mark.parametrize("wm", ["transformer", "gru", "additive", "no_action"])
+@pytest.mark.parametrize("wm", ["transformer", "gru", "additive", "no_action", "randomized_effect"])
 def test_block_causal(data, wm):
     """Perturbing step-h inputs (latent, action, known future) leaves earlier steps unchanged."""
     cfg = tiny_cfg(**{"model.world_model.type": wm, "model.encoder.type": "linear"})
@@ -147,3 +147,30 @@ def test_store_id_zeroed_for_cold_start(data):
     known[data.splits.train_stores] = True
     e = se(ids, known)
     assert (e[~known] == 0).all() and (e[known].abs().sum(1) > 0).all()
+
+
+def test_randomized_effect_learns_only_from_randomized_windows(data):
+    cfg = tiny_cfg(**{"model.world_model.type": "randomized_effect", "model.encoder.type": "linear"})
+    sys_ = System(data.dims, cfg, data.norm)
+    s, o = data.splits.windows("train")
+    b = data.ds.batch(s[:64], o[:64])
+    wm, se = sys_.wm_inputs(0, b)
+    for p in wm.effect.parameters():
+        if p.abs().sum() == 0:
+            torch.nn.init.normal_(p, std=0.1)
+    z_ctx, z0, tgt = sys_.latents(b)
+    wm.eval()
+    # zero plan -> zero effect; the baseline ignores the action
+    zero = torch.zeros_like(b.actions)
+    assert wm.action_effect(z_ctx, zero, b.known_future, b.static, se).abs().max() == 0
+    assert wm.action_effect(z_ctx, zero + 2, b.known_future, b.static, se).abs().max() > 0
+    # effect gradients only from windows whose horizon is fully randomized
+    wm.train()
+    for rnd in (False, True):
+        b.randomized = torch.full_like(b.randomized, rnd)
+        wm.zero_grad()
+        sys_.wm_inputs(0, b)
+        out = sys_.teacher_forced(0, b, z_ctx, z0, tgt)
+        out.pow(2).mean().backward()
+        g = sum(p.grad.abs().sum() for p in wm.effect.parameters() if p.grad is not None)
+        assert (g > 0) == rnd

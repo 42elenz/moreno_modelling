@@ -112,3 +112,38 @@ class WorldModelPredictor:
                 z = self.system.encoder.encode(b.ctx_window())[:, -1]
                 out.append(torch.cat([z[:, self.tgt], z.mean(1)], -1).cpu().numpy())
         return np.concatenate(out, 0)
+
+
+class HybridPredictor:
+    """World model for bread, randomized experiment for the other categories (option 1).
+
+    For a plan [d, 0, 0, 0]: total margin = world-model bread margin under the plan + the world
+    model's *no-discount* margin of the other categories × (1 + r(d)), where r(d) is the relative
+    effect of level d on the other categories' 4-week margin, estimated only from randomized slot
+    weeks of the training period (`baselines.experimental_effects`). The world model's own
+    (confounded) cross-category response is not used. Forecasts under observed actions are the
+    world model's.
+    """
+
+    name = "world_model_hybrid"
+
+    def __init__(self, base: WorldModelPredictor, other_effects) -> None:
+        self.base, self.eff = base, other_effects
+        self._zero_key, self._zero = None, None
+
+    def _no_discount(self, s, t):
+        key = (s.tobytes(), t.tobytes())
+        if key != self._zero_key:
+            self._zero = self.base.predict(s, t, np.zeros((len(s), self.base.data.dims.H)))
+            self._zero_key = key
+        return self._zero
+
+    def predict(self, s, t, actions=None):
+        out = self.base.predict(s, t, actions)
+        if actions is None:
+            return out
+        z = self._no_discount(s, t)
+        other0 = z["total_margin_4w"] - z["bread_margin_4w"]  # [K,N]
+        other = other0 * (1 + self.eff.at(actions[:, 0]))[None]
+        return {"bread_units": out["bread_units"], "total_margin_4w": out["bread_margin_4w"] + other,
+                "bread_margin_4w": out["bread_margin_4w"]}

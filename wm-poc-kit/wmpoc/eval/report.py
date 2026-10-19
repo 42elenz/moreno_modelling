@@ -14,8 +14,10 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 # reference categorical palette, slots 1-3 (validated all-pairs), plus neutral ink for truth
-BLUE, ORANGE, AQUA, INK, MUTED = "#2a78d6", "#eb6834", "#1baf7a", "#0b0b0b", "#8a8984"
-SERIES = {"world_model": BLUE, "lightgbm": ORANGE}
+BLUE, ORANGE, AQUA, VIOLET, INK, MUTED = "#2a78d6", "#eb6834", "#1baf7a", "#6250d6", "#0b0b0b", "#8a8984"
+SERIES = {"world_model": BLUE, "lightgbm": ORANGE, "world_model_hybrid": VIOLET}
+MODELS = ("world_model", "world_model_hybrid", "lightgbm")
+SAME_BREAD = {"world_model_hybrid"}  # bread predictions identical to world_model: left out of bread-only plots
 
 
 def _style(ax) -> None:
@@ -81,6 +83,8 @@ def plot_uplift(run_dir: Path, a: dict, title: str) -> str:
     fig, ax = plt.subplots(figsize=(5, 3.4))
     ax.plot(x, [0] + list(a["true_up"].values()), color=INK, linewidth=2, marker="o", markersize=6, label="truth")
     for n, up in a["pred_up"].items():
+        if n in SAME_BREAD:
+            continue
         ax.plot(x, [0] + [up[d] for d in lv[1:]], color=SERIES.get(n, AQUA), linewidth=2, marker="o", markersize=6, label=n)
     ax.plot(x, [0] + [a["dim"][d] for d in lv[1:]], color=AQUA, linewidth=2, marker="s", markersize=6,
             linestyle="--", label="diff in means")
@@ -100,7 +104,7 @@ def plot_uplift(run_dir: Path, a: dict, title: str) -> str:
 
 
 def plot_store_uplift(run_dir: Path, a: dict) -> str:
-    names = list(a["store_pred_up"])
+    names = [n for n in a["store_pred_up"] if n not in SAME_BREAD]
     fig, axes = plt.subplots(1, len(names), figsize=(3.6 * len(names), 3.3), squeeze=False)
     t = a["store_true_up"]
     for ax, n in zip(axes[0], names):
@@ -120,7 +124,7 @@ def plot_store_uplift(run_dir: Path, a: dict) -> str:
 
 
 def plot_planning(run_dir: Path, pl: dict) -> str:
-    keys = [k for k in ("oracle", "world_model", "lightgbm", "never_discount", "always_10") if k in pl]
+    keys = [k for k in ("oracle",) + MODELS + ("never_discount", "always_10") if k in pl]
     oracle = pl["oracle"]
     vals = [oracle - pl[k] for k in keys]  # regret: lower is better, one common axis
     fig, ax = plt.subplots(figsize=(5, 2.8))
@@ -179,9 +183,10 @@ def write_report(run_dir: Path, metrics: dict, art: dict, cfg, plots: bool = Tru
     t = metrics.get("test", {}).get("all")
     if t:
         pl = t["planning"]
-        wm, lg = pl.get("world_model", {}), pl.get("lightgbm", {})
-        cands = {"world model": wm.get("regret"), "LightGBM": lg.get("regret"), "never discount": pl.get("never_discount_regret"),
-                 "always 10%": pl.get("always_10_regret")}
+        label = {"world_model": "world model", "world_model_hybrid": "hybrid (WM bread + experimental cross effects)",
+                 "lightgbm": "LightGBM"}
+        cands = {label[n]: pl[n]["regret"] for n in MODELS if n in pl}
+        cands.update({"never discount": pl.get("never_discount_regret"), "always 10%": pl.get("always_10_regret")})
         cands = {k: v for k, v in cands.items() if v is not None}
         best = min(cands, key=cands.get)
         L += ["## Headline (test, all stores)", "",
@@ -192,7 +197,7 @@ def write_report(run_dir: Path, metrics: dict, art: dict, cfg, plots: bool = Tru
             L += [f"**WARNING: the world model ignores the action** (|pred(30%)−pred(0%)| is {fmt(sens['ratio'])}× the true difference).", ""]
         e20 = metrics["test"].get("randomized", t)["effect"].get("20%", {})
         rows = []
-        for n in ("world_model", "lightgbm"):
+        for n in MODELS:
             if n not in t["forecast"]:
                 continue
             rows.append([n, t["forecast"][n]["wape_bread_h1"], t["forecast"][n]["margin_4w_wape"], e20.get(f"{n}_bias"),
@@ -211,7 +216,7 @@ def write_report(run_dir: Path, metrics: dict, art: dict, cfg, plots: bool = Tru
             L += [f"### {split} / {sub} ({r['n_windows']} windows)", "", "**Forecast** (WAPE of bread units per horizon step; 4-week total margin)", "",
                   table(["model"] + [f"h{h + 1}" for h in range(H)] + ["margin WAPE", "margin MAE €"], _forecast_rows(r, H)), ""]
             erows = []
-            names = [n for n in ("world_model", "lightgbm") if f"{n}_bias" in next(iter(r["effect"].values()))]
+            names = [n for n in MODELS if f"{n}_bias" in next(iter(r["effect"].values()))]
             for lvl, e in r["effect"].items():
                 erows.append([lvl, e["true_uplift_bread_w0"]] + [e[f"{n}_uplift_bread_w0"] for n in names]
                              + [e[f"{n}_bias"] for n in names] + [e[f"{n}_rmse"] for n in names]

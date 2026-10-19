@@ -54,6 +54,7 @@ class System(nn.Module):
 
     def wm_inputs(self, k: int, batch: TokenBatch) -> tuple:
         wm = self.world_models[k]
+        wm.observe_batch(batch)
         return wm, wm.embed_store(batch.store_id, batch.store_known)
 
     def rollout(self, k: int, batch: TokenBatch, z_ctx: Tensor, z0: Tensor, steps: int | None = None) -> Tensor:

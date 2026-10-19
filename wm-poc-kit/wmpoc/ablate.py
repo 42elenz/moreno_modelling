@@ -36,6 +36,8 @@ KEY_METRICS = [
     ("oracle match (test)", ("test", "all", "planning", "world_model", "oracle_match_share")),
     ("action sensitivity (test)", ("test", "all", "action_sensitivity", "world_model", "ratio")),
     ("Δ margin 4w bias 10% € (test)", ("test", "all", "effect", "10%", "world_model_margin_bias")),
+    ("hybrid regret € (test)", ("test", "all", "planning", "world_model_hybrid", "regret")),
+    ("hybrid regret € (val)", ("val", "all", "planning", "world_model_hybrid", "regret")),
 ]
 
 
@@ -44,7 +46,7 @@ def _get(d: dict, path: tuple) -> float:
         if not isinstance(d, dict) or k not in d:
             return float("nan")
         d = d[k]
-    return float("nan") if d is None else float(d)
+    return float("nan") if d is None or isinstance(d, dict) else float(d)
 
 
 def pretrain_key(cfg) -> str | None:
@@ -182,7 +184,8 @@ def write_summary(out: Path, names: list[str], fname: str = "summary") -> None:
           "planning regret € (val)": ("val", "all", "planning", "lightgbm", "regret"),
           "oracle match (test)": ("test", "all", "planning", "lightgbm", "oracle_match_share"),
           "action sensitivity (test)": ("test", "all", "action_sensitivity", "lightgbm", "ratio"),
-          "Δ margin 4w bias 10% € (test)": ("test", "all", "effect", "10%", "lightgbm_margin_bias")}
+          "Δ margin 4w bias 10% € (test)": ("test", "all", "effect", "10%", "lightgbm_margin_bias"),
+          "hybrid regret € (test)": (), "hybrid regret € (val)": ()}
     if base and "lightgbm" in base[0]["test"]["all"]["forecast"]:
         rows.append(("**lightgbm** (baseline)", len(base), [_ms([_get(m, lg[k]) for m in base]) for k, _ in KEY_METRICS], 0))
     if base:

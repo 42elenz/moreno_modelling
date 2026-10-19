@@ -25,6 +25,10 @@ class WorldModel(nn.Module, ABC):
     def embed_store(self, store_id: Tensor, known: Tensor) -> Tensor:
         return self.store_embedding(store_id, known)
 
+    def observe_batch(self, batch) -> None:
+        """Called with the batch before every forward/rollout; models that need batch metadata
+        (e.g. which windows are randomized) read it here. Default: nothing."""
+
     @abstractmethod
     def forward(self, z_ctx: Tensor, actions: Tensor, known_future: Tensor, static: Tensor, store_emb: Tensor,
                 z_in: Tensor | None = None) -> Tensor:

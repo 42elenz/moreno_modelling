@@ -4,6 +4,7 @@
 # confounded (negative) effect of bread discounts on the other categories from observational
 # promo weeks. If so, up-weighting the randomized weeks should move the other-category margin
 # effect towards the truth and lower planning regret on val.
+# wm_randomized_effect: the action effect is learned from randomized windows only (option 2 in RESULTS).
 
 seeds: [0, 1, 2]
 
@@ -11,3 +12,4 @@ runs:
   reference:      {}                   # same runs as the main grid (already finished, skipped)
   rand_weight_10: {data.randomized_sample_weight: 10.0}
   rand_weight_30: {data.randomized_sample_weight: 30.0}
+  wm_randomized_effect: {model.world_model.type: randomized_effect}
