@@ -1,37 +1,35 @@
 # Results
 
-*Status: draft. Reference run and the brief's six required ablation entries are complete; the remaining
-grid entries (phase B) and the follow-up runs are still running and will be added.*
-
-Data: synthetic panel, 200 stores × 156 weeks × 8 categories, known ground truth. Test = weeks 130–155
-(4 600 store-weeks with counterfactuals), val = weeks 104–129. Everything below is on **test, all stores**
-unless stated; model choices were made on val. Planning regret = true 4-week total margin of the oracle level
-minus that of the chosen level (€ per store-week, lower is better).
+Data: synthetic panel, 200 stores × 156 weeks × 8 categories, known ground truth. Test = origins in weeks 130–152
+(4 600 store-weeks with counterfactuals), val = weeks 104–126. All numbers are on **test, all stores** unless stated.
+Planning regret = true 4-week total margin of the oracle discount level minus that of the chosen level, € per
+store-week, lower is better. Model choices should be read off the val column; test is reported for completeness.
 
 ## Short answer
 
-**The world-model stack does not beat the simplest policy.** "Never discount" has a test regret of 38 €; the
-reference world model 49 € (full budget) and 66 ± 10 € (reduced ablation budget, 3 seeds). It does beat the
-LightGBM planner by a wide margin (103–107 €), and it recovers the bread discount effect about as well as LightGBM.
-The headroom is small: the oracle beats "never discount" by only 38 € on a 37 245 € 4-week margin (0.1 %).
+**The world-model stack does not beat the simplest policy.** "Never discount" has a test regret of 38 €. The
+reference world model reaches 49 € at full budget and 66 ± 10 € in the ablation budget; no variant goes below 38 €.
+The stack does beat the LightGBM planner by a wide margin (103–107 €). The headroom is small: the oracle beats
+"never discount" by only 38 € on a 37 245 € 4-week margin (0.1 %).
 
-What the stack gets right, and where it fails:
-
-1. **Bread effect: yes.** Mean predicted 10 % uplift in week-0 bread units 323 vs true 322; per-store uplift
-   ranks correlate 0.91 with the truth (LightGBM 0.90). Diff-in-means on the randomized slots (252) and the naive
-   observational estimate (340) are both further from the truth (322).
-2. **Margin effect: no.** The planner needs Δ 4-week total margin. At 10 % the world model's bread margin effect
-   is right (−217 € vs −223 € on val) but its effect on the **other seven categories has the wrong sign**
-   (−118 € predicted vs +165 € true: the halo brings extra visitors). The likely cause is confounding in the
-   observational weeks, where bread promos are more frequent in weak-traffic weeks, so "bread discount" co-occurs
-   with "other categories down". The model therefore over-states the cost of discounting and picks 0 % in 91 %
-   of store-weeks (truth: 68 %).
-3. **Representation: yes, modestly.** Frozen z(t) predicts the hidden AR(1) traffic shock (R² 0.66, vs ≈ 0 for
-   calendar + store and calendar + static features) and the store's true price sensitivity better than the
-   observable store features (R² 0.59–0.62 vs 0.54). kNN in z-space forecasts next-week bread units slightly
-   better than kNN on static features (WAPE 0.171 vs 0.187).
-4. **Forecasting: LightGBM wins for the JEPA reference** (bread WAPE h1 0.103 vs 0.081), but the masked-AE
-   variant beats LightGBM (0.079).
+1. **The bread effect is learned well.** Mean predicted 10 % uplift in week-0 bread units 323 vs true 322; per-store
+   uplift ranks correlate 0.88–0.91 with the truth, as good as LightGBM (0.89–0.90). Diff-in-means on the randomized
+   slots (252) and the naive observational estimate (340) are both further from the truth.
+2. **The margin effect is wrong, and that is why planning fails.** The model gets the *bread* margin effect roughly
+   right, but predicts that the *other seven categories* lose money under a bread discount, when they actually gain
+   ~170 € per store-week at 10 % (the halo brings extra visitors). It therefore over-states the cost of discounting
+   and picks 0 % in ~80–90 % of store-weeks (truth: 68 %).
+3. **The cause is confounding in the observational weeks** (bread promos are more frequent in weak-traffic weeks).
+   Evidence: removing the extra weight on randomized weeks makes the other-category error much worse; up-weighting
+   them moves it towards the truth (table below). Up-weighting alone does not fix planning, though: the bread effect
+   then becomes too optimistic and val regret rises.
+4. **JEPA pretraining is not worth it here.** Masked-AE, linear and even random frozen encoders plan as well as JEPA
+   (differences within seed noise); masked-AE and supervised encoders forecast better.
+5. **Better forecasts do not mean better plans.** The supervised encoder and LightGBM have the best forecasts
+   (bread WAPE 0.078 / 0.081) and among the worst planning regrets (82 € / 103 €).
+6. **The representation is the clear positive.** Frozen z(t) predicts the hidden traffic shock (R² 0.63 vs ≈ 0 for
+   calendar + store and calendar + static features) and the true store price sensitivity better than observable
+   store features (R² 0.59 vs 0.54).
 
 ## Reference run (`configs/poc_tiny.yaml`, JEPA + transformer × 3, full budget, 55 min on 4 CPU cores)
 
@@ -43,44 +41,92 @@ Full report: [`runs/poc_tiny/report.md`](runs/poc_tiny/report.md).
 | randomized slot weeks | 39.4 | 115.4 | **29.3** | 109.1 | 0.098 / 0.082 |
 | cold-start stores | 41.8 | 114.9 | **24.7** | 121.3 | 0.107 / 0.082 |
 
-- Effect recovery, test randomized slots (comparable to the manifest): bias at 20 % −39 units (LightGBM +40,
-  diff-in-means −76, naive +152).
-- Heads on *real* future embeddings reach bread WAPE 0.048; on *predicted* embeddings 0.103. Half of the forecast
-  error is the world model's, half the decoder's.
-- Censored and uncensored weeks have the same error (0.101 vs 0.103), so the Tobit head does not leave a bias.
+- Effect recovery on the test randomized slots (same population as the manifest): bias at 20 % −39 units
+  (LightGBM +40, diff-in-means −76, naive observational +152).
+- Margin effect split at 10 % (val): bread −217 € predicted vs −223 € true; other categories −118 € vs +165 €;
+  total −335 € vs −58 €.
+- Heads on *real* future embeddings reach bread WAPE 0.048; on *predicted* embeddings 0.103. About half of the
+  forecast error is the world model's.
+- Censored and uncensored weeks have the same error (0.101 vs 0.103): the Tobit head leaves no visible bias.
 - Cold-start stores (no store ID): CATE Spearman 0.80 vs LightGBM 0.82; forecast WAPE 0.107 vs 0.082.
+- Representation (test): traffic-shock probe R² 0.66 (floors −0.00 / −0.02), `bread_beta` 0.59 (static floor
+  0.54), kNN next-week bread WAPE 0.171 in z-space vs 0.187 on static features.
 
-## Ablations
+## Ablations (17 entries × 3 seeds)
 
 Reduced budget so the grid fits on a 4-core CPU: pretraining and world-model stages 8 epochs (instead of 15/20),
-ensemble of 2 (instead of 3), one thread per run, 3 seeds. Table: [`runs/ablations/summary.md`](runs/ablations/summary.md).
+ensemble of 2 (instead of 3), one thread per run. Full table: [`runs/ablations/summary.md`](runs/ablations/summary.md).
+Differences below ~15 € regret are within seed noise.
 
 | run | test regret € | val regret € | WAPE bread h1 | CATE Spearman | Δ margin bias 10 % € |
 |---|---|---|---|---|---|
 | never discount | **38.3** | **37.7** | – | – | – |
 | wm_no_action | 38.3 ± 0.0 | 37.7 ± 0.0 | 0.136 | – (constant) | −218 |
-| enc_masked_ae | 63.4 ± 15.7 | 42.3 ± 1.7 | **0.079** | 0.895 | −172 ± 166 |
-| enc_linear | 64.3 ± 15.3 | 63.5 ± 19.3 | 0.092 | 0.885 | −226 ± 122 |
-| reference (jepa) | 66.2 ± 10.3 | 60.3 ± 11.9 | 0.099 | 0.882 | −56 ± 82 |
+| observational_only | 42.5 ± 3.7 | 49.4 ± 9.4 | 0.106 | 0.865 | −342 |
+| no_rollout_loss | 59 ± 14 | 65 | 0.099 | 0.882 | −217 |
+| enc_masked_ae | 63 ± 16 | 42 ± 2 | 0.079 | 0.895 | −172 |
+| enc_linear | 64 ± 15 | 64 ± 19 | 0.092 | 0.885 | −226 |
+| **reference** (jepa + transformer) | **66 ± 10** | 60 ± 12 | 0.099 | 0.882 | −56 |
+| enc_random | 67 ± 17 | 48 | 0.084 | 0.904 | −162 |
+| no_store_id | 67 ± 21 | 56 | 0.098 | 0.882 | −33 |
+| store_id_no_dropout | 69 ± 2 | 65 | 0.098 | 0.889 | +15 |
+| no_censoring | 71 ± 12 | 64 | 0.100 | 0.864 | −31 |
+| no_bread_weighting | 73 ± 6 | 65 | 0.102 | 0.856 | +52 |
+| joint_finetune | 78 ± 16 | 75 ± 23 | 0.093 | 0.883 | −28 |
+| enc_supervised | 82 ± 29 | 60 | **0.078** | **0.925** | −129 |
+| wm_gru | 86 ± 14 | 123 | 0.150 | 0.781 | +104 |
 | always 10 % | 98.7 | 95.6 | – | – | – |
-| LightGBM | 102.9 ± 5.9 | 76.2 ± 10.9 | 0.081 | 0.893 | −16 ± 7 |
-| keep_price_in_targets | 112.1 ± 47.4 | 117.1 ± 81.3 | 0.095 | 0.877 | +2 ± 203 |
-| wm_direct | 198.7 ± 14.9 | 186.1 ± 23.1 | 0.085 | 0.895 | +167 ± 7 |
+| LightGBM (baseline) | 103 ± 6 | 76 ± 11 | 0.081 | 0.893 | −16 |
+| keep_price_in_targets | 112 ± 47 | 117 ± 81 | 0.095 | 0.877 | +2 |
+| wm_direct | 199 ± 15 | 186 ± 23 | 0.085 | 0.895 | +167 |
+| wm_additive | 561 ± 0.5 | 528 | 0.174 | 0.779 | +1 060 |
 
 What this shows:
 
-- **The simpler model wins.** `wm_no_action` (the world model with actions zeroed) never discounts, so it ties
-  "never discount" and has the lowest regret of any model. Correctly flagged as ignoring the action.
-- **JEPA pretraining is not worth it here.** Masked-AE is better on forecasting (0.079 vs 0.099) and on val regret
-  (42 vs 60); a frozen random *linear* projection plans as well as JEPA (64 vs 66). Differences in test regret
-  between the three encoders are within one standard deviation.
-- **Latent dynamics matter for planning.** `wm_direct` (heads read z(t) + action directly) forecasts bread well
-  (0.085) and ranks stores well (0.895) but has the worst regret (199 €): it over-predicts the margin gain of a
-  discount (+167 € bias) and discounts 75 % of store-weeks.
-- **Dropping prices from the targets matters.** Keeping them roughly doubles regret and makes it unstable across
-  seeds (112 ± 47 €), without changing the bread effect much.
-- **LightGBM** has the smallest *average* margin bias but the worst *ranking* of store-weeks among the planners,
-  so its choices are poor (oracle match 51 % vs 60 % for the reference).
+- **The simpler model wins.** `wm_no_action` (actions zeroed) never discounts and ties "never discount", the lowest
+  regret of any model. It is correctly flagged as ignoring the action. `observational_only` comes next for the same
+  reason: confounding makes it so pessimistic that it almost never discounts.
+- **Encoder choice does not matter for planning.** JEPA, masked-AE, linear and random frozen encoders are within
+  one standard deviation of each other on test regret. Masked-AE forecasts better (0.079 vs 0.099) and has the
+  lowest val regret among models that act (42 €). The supervised encoder has the best forecast and effect ranking but
+  a noisy, poor planning regret.
+- **The world-model architecture does matter.** The block-causal transformer beats the GRU (86 €), the direct
+  model without latent dynamics (199 €) and the additive model (561 €). Additive fails because its action delta
+  cannot depend on the store's state, so it over-predicts the margin gain of discounting by ~1 000 €. Direct
+  over-predicts it by ~170 € and discounts 75 % of store-weeks.
+- **Dropping prices from the world-model targets matters.** Keeping them nearly doubles regret and makes it unstable
+  across seeds (112 ± 47 €).
+- **Rollout loss, bread weighting, store-ID choices, censoring handling and joint finetuning** all change regret by
+  less than the seed noise.
+- **LightGBM** has the smallest *average* margin bias but the worst *ranking* of store-weeks among the reasonable
+  planners (oracle match 51 % vs 60 % for the reference), so its choices are poor.
+
+## Follow-up: is the margin error confounding? (`configs/ablations_extra.yaml`, 3 seeds)
+
+Margin effect of a 10 % discount on the **other seven categories**, € per store-week (truth: +165 on val,
++177 on test), and the bread margin effect (truth: −223 val / −237 test):
+
+| randomized-week weight | val other-cat effect | val bread effect | val regret € | test regret € | picks 0 % (test) |
+|---|---|---|---|---|---|
+| 0 (`observational_only`) | −122 ± 160 | −176 | 49 ± 9 | 43 ± 4 | 100 % |
+| 3 (reference) | −49 ± 177 | −102 | 60 ± 12 | 66 ± 10 | 80 % |
+| 10 | +20 ± 207 | −65 | 68 ± 16 | 71 ± 14 | 70 % |
+| 30 | +146 ± 189 | −42 | 88 ± 18 | 75 ± 8 | 60 % |
+
+The other-category effect moves towards the truth as the randomized weeks get more weight, which supports the
+confounding explanation. But the bread margin effect drifts the other way (too optimistic), the seed spread is
+large, and val regret gets worse. Re-weighting one shared model is not the fix.
+
+## What to try next
+
+1. **Quick check:** keep the world model's bread effect and take the other-category effect from the randomized slots
+   (difference in means of other-category margin at d vs 0 %). If regret drops below 38 €, the diagnosis is confirmed.
+2. **Proper fix:** split the model into a baseline (no-discount) world model trained on all weeks and a small
+   action-effect module trained only on randomized weeks, so confounded weeks can no longer teach the effect.
+3. **Alternative:** inverse-propensity weighting of the observational weeks, with a propensity model that uses z(t)
+   (which already captures the hidden traffic shock).
+4. **Reality check:** the oracle gap is 0.1 % of margin, while the margin forecast error is ~8 %. More randomized
+   experimentation is the lasting fix; it is the only reason the bread effect is right today.
 
 ## Changes from the brief, and why
 
@@ -130,10 +176,14 @@ Planning and evaluation
 - **Probes** use z(t) = [bread token, category mean] of the last context week. Besides the calendar + store one-hot
   floor (useless for store-level traits under store-grouped CV by construction) there is a calendar + static-features
   floor, the honest comparison for `bread_beta` and `size_sqm`.
-- **LightGBM** has no store ID (grouped by nothing; static features stand in) and predicts total margin directly, as
+- **LightGBM** has no store ID (static store features stand in) and predicts total margin directly, as
   specified. Its planner uses that margin model.
 
 Runs
 - **Ablation budget reduced** (8 + 8 epochs, ensemble of 2, see above) to fit the 17 × 3 grid on 4 CPU cores. Runs
   with identical pretraining settings share one pretraining checkpoint (bit-identical to re-running it).
 - **Holiday probe is undefined on test**: no national holiday falls on a test origin week; it is reported for val.
+- **Follow-up grid** `configs/ablations_extra.yaml` (randomized-week weight 10 and 30) is an addition to the brief,
+  run with the same budget; its summary is `runs/ablations/summary_extra.md`.
+- **The full-budget reference** was evaluated a second time from its checkpoints (`--eval-only`) after the
+  bread / other-category margin split was added to the evaluation; the training was not repeated.
