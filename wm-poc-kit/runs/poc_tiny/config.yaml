@@ -1,5 +1,5 @@
 experiment:
-  threads: 2
+  threads: 1
   name: poc_tiny
   seed: 0
   device: auto
@@ -165,6 +165,7 @@ planning:
   risk_on: uplift
   hybrid_other_effects: true
   structured_bread: true
+  calibrate_bread: true
   discount_levels:
   - 0.0
   - 0.1
