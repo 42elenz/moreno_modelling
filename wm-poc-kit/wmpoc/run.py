@@ -7,6 +7,7 @@ everything to `runs/<name>/`. `--resume` continues after the last saved stage ch
 from __future__ import annotations
 
 import argparse
+import json
 import random
 import time
 from pathlib import Path
@@ -95,7 +96,10 @@ def run(cfg, resume: bool = False, from_stage: str | None = None, eval_only: boo
         torch.save({"system": system.state_dict(), "encoder": system.encoder.state_dict(), "stage": s, "history": hist},
                    out / "checkpoints" / f"{s}.pt")
     train_time = time.time() - t0
+    if eval_only and (out / "metrics.json").exists():  # keep the training time of the original run
+        train_time = json.loads((out / "metrics.json").read_text()).get("meta", {}).get("train_time_s", train_time)
 
+    t_eval = time.time()
     predictors = {"world_model": WorldModelPredictor(system, data, device)}
     if bool(cfg.baselines.lightgbm.enabled):
         _log("fitting LightGBM baseline")
@@ -104,7 +108,8 @@ def run(cfg, resume: bool = False, from_stage: str | None = None, eval_only: boo
     extras = predictors["world_model"] if system.latent_wm else _NoRealEmbeddings(predictors["world_model"])
     metrics, art = evaluate(data, cfg, predictors, extras)
     metrics["meta"] = {"name": str(cfg.experiment.name), "n_stores": int(data.panel.n_stores), "stages": stages,
-                       "train_time_s": train_time, "runtime_s": time.time() - t0,
+                       "train_time_s": train_time, "runtime_s": train_time + (time.time() - t_eval),
+                       "evaluated_from_checkpoint": bool(eval_only),
                        "n_params": int(sum(p.numel() for p in system.parameters())),
                        "train_windows": int(len(ctx.train[0]))}
     write_metrics(out, metrics)

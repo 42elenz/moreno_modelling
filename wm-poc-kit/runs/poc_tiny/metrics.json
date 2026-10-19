@@ -1075,8 +1075,8 @@
       "world_model",
       "outcome_heads"
     ],
-    "train_time_s": 1.8983154296875,
-    "runtime_s": 123.07869935035706,
+    "train_time_s": 3201,
+    "runtime_s": 3310,
     "n_params": 731112,
     "train_windows": 15810
   }
