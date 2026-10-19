@@ -21,7 +21,8 @@ from wmpoc.data.windows import build_data
 from wmpoc.eval.metrics import evaluate
 from wmpoc.eval.report import write_metrics, write_report
 from wmpoc.models.system import System
-from wmpoc.baselines.experimental_effects import level_effects, pull_forward, relative_effects, slot_windows
+from wmpoc.baselines.experimental_effects import (level_effects, pooled_relative_effects, pull_forward, relative_effects,
+                                                  slot_windows)
 from wmpoc.planning.planner import (CalibratedPredictor, HybridPredictor, LightGBMPredictor, StructuredPredictor,
                                     WorldModelPredictor)
 from wmpoc.training.stages import RUNNERS, STAGES, StageContext, _log
@@ -104,25 +105,29 @@ def run(cfg, resume: bool = False, from_stage: str | None = None, eval_only: boo
     t_eval = time.time()
     predictors = {"world_model": WorldModelPredictor(system, data, device)}
     if bool(cfg.planning.hybrid_other_effects):
-        eff = relative_effects(data.panel, data.splits.ranges["train"], data.splits.train_stores,
-                               [float(x) for x in cfg.planning.discount_levels], data.dims.H, "other")
-        _log("experimental other-category effects (train slots): "
-             + ", ".join(f"{d:.0%} {r:+.2%} ± {e:.2%}" for d, r, e in zip(eff.levels, eff.rel, eff.se)))
+        lv = [float(x) for x in cfg.planning.discount_levels]
+        tr, st, H = data.splits.ranges["train"], data.splits.train_stores, data.dims.H
+        p = data.panel
+        eff = relative_effects(p, tr, st, lv, H, "other")
+        pooled = pooled_relative_effects(p, tr, st, lv, H, "other")
+        for name, e in (("per level", eff), ("pooled slope", pooled)):
+            _log(f"experimental other-category effects, {name} (train slots): "
+                 + ", ".join(f"{d:.0%} {r:+.2%} ± {x:.2%}" for d, r, x in zip(e.levels, e.rel, e.se)))
         predictors["world_model_hybrid"] = HybridPredictor(predictors["world_model"], eff)
         if bool(cfg.planning.structured_bread):
-            pf = pull_forward(data.panel, data.splits.ranges["train"], data.splits.train_stores,
-                              [float(x) for x in cfg.planning.discount_levels], data.dims.H)
+            pf = pull_forward(p, tr, st, lv, H)
             _log(f"experimental bread pull-forward shares (train slots): {pf.summary()}")
             predictors["world_model_structured"] = StructuredPredictor(predictors["world_model"], eff, pf)
+            sp_ = StructuredPredictor(predictors["world_model"], pooled, pf)
+            sp_.name = "world_model_structured_pooled"
+            predictors[sp_.name] = sp_
             if bool(cfg.planning.calibrate_bread):
-                lv = [float(x) for x in cfg.planning.discount_levels]
-                tr, st, H = data.splits.ranges["train"], data.splits.train_stores, data.dims.H
-                p, a = data.panel, data.panel.action_idx[0]
+                a = p.action_idx[0]
                 waste4 = np.zeros(p.units.shape[:2])
                 waste4[:, : p.n_weeks - H + 1] = sum(p.waste[:, h: p.n_weeks - H + 1 + h, a] for h in range(H))
                 wb, _ = level_effects(p, tr, st, lv, waste4, H)
                 cs, ct = slot_windows(p, tr, st, H)
-                cal = CalibratedPredictor(predictors["world_model"], eff, pf, cs, ct, pf.beta[:, 0], wb, lv)
+                cal = CalibratedPredictor(predictors["world_model"], pooled, pf, cs, ct, pf.beta[:, 0], wb, lv)
                 _log(f"bread calibration to the experiment (train slots): {cal.summary()}")
                 predictors["world_model_calibrated"] = cal
     if bool(cfg.baselines.lightgbm.enabled):

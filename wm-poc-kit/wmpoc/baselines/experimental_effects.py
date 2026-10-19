@@ -164,3 +164,26 @@ def level_effects(p: Panel, weeks: tuple[int, int], stores: np.ndarray, levels: 
     d = p.discount[s, t, p.action_idx[0]]
     lvl = np.array([int(np.argmin(np.abs(np.asarray(levels) - x))) for x in d])
     return _fe_regression(y[s, t], lvl, s, t, len(levels))
+
+
+def pooled_relative_effects(p: Panel, weeks: tuple[int, int], stores: np.ndarray, levels: list[float], H: int,
+                            categories: str = "other") -> RelativeEffects:
+    """Like `relative_effects`, but one log-linear dose-response for all levels: log margin = γ·d + FE.
+
+    One parameter instead of one per level, so less noise; assumes the effect grows ~linearly with d.
+    """
+    s, t = slot_windows(p, weeks, stores, H)
+    cat_mask = np.ones(len(p.categories), dtype=bool)
+    if categories == "other":
+        cat_mask[p.action_idx] = False
+    elif categories == "bread":
+        cat_mask[:] = False
+        cat_mask[p.action_idx] = True
+    y = sum(p.margin[s, t + h][:, cat_mask].sum(-1) for h in range(H))
+    ok = y > 0
+    s, t, y = s[ok], t[ok], np.log(y[ok])
+    g, se = _fe_slope(y, p.discount[s, t, p.action_idx[0]], s, t)
+    lv = np.asarray(levels, dtype=float)
+    d = p.discount[s, t, p.action_idx[0]]
+    n = np.array([np.isclose(d, x).sum() for x in lv])
+    return RelativeEffects(list(levels), np.exp(g * lv) - 1, se * lv, n)

@@ -75,9 +75,11 @@ class WorldModelPredictor:
 
     name = "world_model"
 
-    def __init__(self, system, data, device: str | object = "cpu", batch_size: int = 512) -> None:
+    def __init__(self, system, data, device: str | object = "cpu", batch_size: int = 512, cache_size: int = 16) -> None:
         self.system, self.data, self.device, self.bs = system, data, device, batch_size
         self.tgt = data.dims.target_idx
+        self._cache: dict[bytes, dict] = {}  # several planners ask for the same rollouts
+        self._cache_size = cache_size
 
     def _batches(self, s: np.ndarray, t: np.ndarray, actions: np.ndarray | None):
         for i in range(0, len(s), self.bs):
@@ -88,6 +90,16 @@ class WorldModelPredictor:
             yield b.to(self.device)
 
     def predict(self, s, t, actions=None):
+        key = s.tobytes() + b"|" + t.tobytes() + b"|" + (b"obs" if actions is None else np.asarray(actions, np.float64).tobytes())
+        if key in self._cache:
+            return self._cache[key]
+        out = self._predict(s, t, actions)
+        if len(self._cache) >= self._cache_size:
+            self._cache.pop(next(iter(self._cache)))
+        self._cache[key] = out
+        return out
+
+    def _predict(self, s, t, actions):
         self.system.eval()
         units, waste, margin, bmargin = [], [], [], []
         for b in self._batches(s, t, actions):

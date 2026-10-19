@@ -16,9 +16,10 @@ import numpy as np  # noqa: E402
 # reference categorical palette, slots 1-3 (validated all-pairs), plus neutral ink for truth
 BLUE, ORANGE, AQUA, VIOLET, INK, MUTED = "#2a78d6", "#eb6834", "#1baf7a", "#6250d6", "#0b0b0b", "#8a8984"
 SERIES = {"world_model": BLUE, "lightgbm": ORANGE, "world_model_hybrid": VIOLET, "world_model_structured": AQUA,
-          "world_model_calibrated": "#e87ba4"}
-MODELS = ("world_model", "world_model_hybrid", "world_model_structured", "world_model_calibrated", "lightgbm")
-SAME_BREAD = {"world_model_hybrid", "world_model_structured"}  # bread predictions identical to world_model: left out of bread-only plots
+          "world_model_calibrated": "#e87ba4", "world_model_structured_pooled": "#008300"}
+MODELS = ("world_model", "world_model_hybrid", "world_model_structured", "world_model_structured_pooled",
+          "world_model_calibrated", "lightgbm")
+SAME_BREAD = {"world_model_hybrid", "world_model_structured", "world_model_structured_pooled"}  # bread predictions identical to world_model: left out of bread-only plots
 
 
 def _style(ax) -> None:
@@ -186,7 +187,8 @@ def write_report(run_dir: Path, metrics: dict, art: dict, cfg, plots: bool = Tru
         pl = t["planning"]
         label = {"world_model": "world model", "world_model_hybrid": "hybrid (WM bread + experimental cross effects)",
                  "world_model_structured": "structured (hybrid + experimental pull-forward)",
-                 "world_model_calibrated": "calibrated (structured + bread effects calibrated to the experiment)", "lightgbm": "LightGBM"}
+                 "world_model_structured_pooled": "structured, pooled cross-category slope",
+                 "world_model_calibrated": "calibrated (structured, pooled slope, bread effects calibrated)", "lightgbm": "LightGBM"}
         cands = {label[n]: pl[n]["regret"] for n in MODELS if n in pl}
         cands.update({"never discount": pl.get("never_discount_regret"), "always 10%": pl.get("always_10_regret")})
         cands = {k: v for k, v in cands.items() if v is not None}

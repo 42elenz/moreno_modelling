@@ -40,6 +40,8 @@ KEY_METRICS = [
     ("hybrid regret € (val)", ("val", "all", "planning", "world_model_hybrid", "regret")),
     ("structured regret € (test)", ("test", "all", "planning", "world_model_structured", "regret")),
     ("structured regret € (val)", ("val", "all", "planning", "world_model_structured", "regret")),
+    ("structured pooled regret € (test)", ("test", "all", "planning", "world_model_structured_pooled", "regret")),
+    ("structured pooled regret € (val)", ("val", "all", "planning", "world_model_structured_pooled", "regret")),
     ("calibrated regret € (test)", ("test", "all", "planning", "world_model_calibrated", "regret")),
     ("calibrated regret € (val)", ("val", "all", "planning", "world_model_calibrated", "regret")),
 ]
@@ -191,6 +193,7 @@ def write_summary(out: Path, names: list[str], fname: str = "summary") -> None:
           "Δ margin 4w bias 10% € (test)": ("test", "all", "effect", "10%", "lightgbm_margin_bias"),
           "hybrid regret € (test)": (), "hybrid regret € (val)": (),
           "structured regret € (test)": (), "structured regret € (val)": (),
+          "structured pooled regret € (test)": (), "structured pooled regret € (val)": (),
           "calibrated regret € (test)": (), "calibrated regret € (val)": ()}
     if base and "lightgbm" in base[0]["test"]["all"]["forecast"]:
         rows.append(("**lightgbm** (baseline)", len(base), [_ms([_get(m, lg[k]) for m in base]) for k, _ in KEY_METRICS], 0))
