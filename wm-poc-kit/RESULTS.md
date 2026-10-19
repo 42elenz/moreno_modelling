@@ -31,6 +31,11 @@ The stack does beat the LightGBM planner by a wide margin (103–107 €). The h
    calendar + store and calendar + static features) and the true store price sensitivity better than observable
    store features (R² 0.59 vs 0.54).
 
+7. **Fixes and data check (follow-up).** Taking the cross-category effect from the experiment (hybrid planner)
+   brings the full-budget model to 39 € val regret, level with "never discount" but not better; learning the
+   whole effect from randomized windows only does worse (102 €). The data audit explains why: the experiment
+   identifies the average margin effect only to ± 314 € per store-week while the decision needs ~± 38 €.
+
 ## Reference run (`configs/poc_tiny.yaml`, JEPA + transformer × 3, full budget, 55 min on 4 CPU cores)
 
 Full report: [`runs/poc_tiny/report.md`](runs/poc_tiny/report.md).
@@ -117,16 +122,68 @@ The other-category effect moves towards the truth as the randomized weeks get mo
 confounding explanation. But the bread margin effect drifts the other way (too optimistic), the seed spread is
 large, and val regret gets worse. Re-weighting one shared model is not the fix.
 
+## Is the data informative enough? (`python -m wmpoc.eval.data_audit`)
+
+Full audit: [`runs/data_audit/report.md`](runs/data_audit/report.md). The generator looks correct (no bugs found);
+the problem is how little the data says about the quantity the planner needs.
+
+- **The prize is tiny and mostly store-level.** The oracle gains 38 € (0.10 %) over never discounting. A fixed
+  level per store, chosen with hindsight, already captures 29 € of it (regret 9 €); week-to-week timing adds ~9 €.
+  A 10 % discount pays off in 32 % of store-weeks; its true effect ranges from −246 € (p10) to +116 € (p90).
+- **Confounding is real and flips the sign of the cross-category effect.** In observational weeks, discounted weeks
+  have 1.6 % less hidden traffic. A store + week fixed-effects regression on those weeks gives −1.1 % for the other
+  categories' margin at 10 % (true +0.56 %): the same error the world model makes.
+- **The randomized experiment is unbiased but small.** From the training period (309–322 slot windows per level):
+  bread margin effect −3.9 % ± 1.3 % at 10 % (true −4.4 %), well identified; other categories +0.65 % ± 0.83 %
+  (true +0.56 %), not significant; total margin +0.02 % ± 0.84 % (true −0.18 %).
+- **Required sample size.** The experiment pins down the average 10 % effect on 4-week total margin to ± 314 € per
+  store-week. Capturing a 38 € headroom needs about ± 38 €: roughly **67× more randomized slot windows** for the
+  average effect alone, more for store-level decisions. The planner can only win by leaning on structure (the
+  precisely estimated bread effect), not by learning the total effect from the data.
+
+## Fixes tried
+
+**Option 1 — hybrid planner** (`world_model_hybrid`, evaluated in every run). Bread margin from the world model;
+the other categories' margin = the world model's no-discount prediction × (1 + r(d)), with r(d) estimated only from
+the randomized slots of the training period (+0.65 %, +1.12 %, +0.67 % at 10/20/30 %).
+
+| run | regret € val: WM → hybrid | regret € test: WM → hybrid | Δ margin bias 10 % € (test): WM → hybrid |
+|---|---|---|---|
+| full-budget reference (`runs/poc_tiny`) | 46.9 → **39.2** | 48.7 → 45.1 | −188 → +85 |
+| reduced-budget reference, 3 seeds | 60 ± 12 → 61 ± 14 | 66 ± 10 → 65 ± 11 | −56 → +162 |
+| never discount | 37.7 | 38.3 | – |
+
+The hybrid removes the confounded cross-category error, and the full-budget model comes within 1.5 € of "never
+discount" on val. It still does not beat it. The next error appears: the world model's **bread margin** effect is
+too optimistic (full budget −189 € vs −237 € true on test; reduced budget −112 €). Before, the two errors partly
+cancelled; now the hybrid over-discounts (0 % chosen in 71 % / 39 % of store-weeks vs 68 % optimal).
+
+**Option 2 — effect learned only from randomized windows** (`model.world_model.type: randomized_effect`, 3 seeds,
+reduced budget). Baseline transformer with actions zeroed, trained on all windows, plus a per-category effect
+module that only receives gradients from windows whose horizon lies inside the experiment.
+
+| | test regret € | val regret € | CATE Spearman | other-cat effect 10 % (test, true +177) | bread margin effect 10 % (test, true −237) |
+|---|---|---|---|---|---|
+| reference | 66 ± 10 | 60 ± 12 | 0.88 | −5 | −112 |
+| randomized_effect | 102 ± 24 | 144 ± 18 | 0.77 | +86 | −54 |
+| randomized_effect + hybrid | 94 ± 8 | 95 ± 11 | – | (experimental) | −54 |
+
+It moves the cross-category effect the right way, but ~3 000 overlapping randomized windows are not enough to learn
+the full effect in latent space: the bread margin effect is badly under-estimated and store ranking gets worse.
+This is the same information limit the audit shows; the representation does not get around it.
+
 ## What to try next
 
-1. **Quick check:** keep the world model's bread effect and take the other-category effect from the randomized slots
-   (difference in means of other-category margin at d vs 0 %). If regret drops below 38 €, the diagnosis is confirmed.
-2. **Proper fix:** split the model into a baseline (no-discount) world model trained on all weeks and a small
-   action-effect module trained only on randomized weeks, so confounded weeks can no longer teach the effect.
-3. **Alternative:** inverse-propensity weighting of the observational weeks, with a propensity model that uses z(t)
-   (which already captures the hidden traffic shock).
-4. **Reality check:** the oracle gap is 0.1 % of margin, while the margin forecast error is ~8 %. More randomized
-   experimentation is the lasting fix; it is the only reason the bread effect is right today.
+1. **Get the bread margin effect right before anything else.** Bread units are right but the 4-week bread margin
+   effect is too optimistic, most likely through pull-forward and waste in weeks 1–3. A structured decoder (margin
+   from predicted units, stock and the known pull-forward window, or the bread effect fitted to the randomized slots
+   where it is well identified, t = 3.5–17) is the obvious next step.
+2. **Use structure for the cross-category effect** instead of learning it: the hybrid's experimental r(d), or a
+   pooled "halo" parameter shared by all categories, since the experiment cannot resolve each category alone.
+3. **Train longer / bigger ensembles** — the full-budget run is clearly better than the reduced ablation budget
+   (hybrid val regret 39 vs 61 €), so the reduced-budget ablations understate what the stack can do.
+4. **More experimentation is the lasting fix.** In the simulator: more stores in the cohort or more slot weeks
+   (`data_gen/generate_fake_data.py`), then re-run the audit; the audit says ~67× for the average effect.
 
 ## Changes from the brief, and why
 

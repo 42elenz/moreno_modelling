@@ -33,6 +33,14 @@
     "\u0394 margin 4w bias 10% \u20ac (test)": {
       "mean": NaN,
       "std": NaN
+    },
+    "hybrid regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "hybrid regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
     }
   },
   {
@@ -67,6 +75,14 @@
       "std": NaN
     },
     "\u0394 margin 4w bias 10% \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "hybrid regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "hybrid regret \u20ac (val)": {
       "mean": NaN,
       "std": NaN
     }
@@ -105,6 +121,14 @@
     "\u0394 margin 4w bias 10% \u20ac (test)": {
       "mean": -56.39592099094551,
       "std": 81.5239289177345
+    },
+    "hybrid regret \u20ac (test)": {
+      "mean": 65.0255463768116,
+      "std": 10.77357986430049
+    },
+    "hybrid regret \u20ac (val)": {
+      "mean": 60.845919492753644,
+      "std": 14.271003873206501
     }
   },
   {
@@ -141,6 +165,14 @@
     "\u0394 margin 4w bias 10% \u20ac (test)": {
       "mean": 28.30000949001152,
       "std": 154.7491255979272
+    },
+    "hybrid regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "hybrid regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
     }
   },
   {
@@ -177,6 +209,14 @@
     "\u0394 margin 4w bias 10% \u20ac (test)": {
       "mean": 119.645403624533,
       "std": 124.33578172234965
+    },
+    "hybrid regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "hybrid regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
     }
   },
   {
@@ -213,6 +253,58 @@
     "\u0394 margin 4w bias 10% \u20ac (test)": {
       "mean": NaN,
       "std": NaN
+    },
+    "hybrid regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "hybrid regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    }
+  },
+  {
+    "run": "wm_randomized_effect",
+    "seeds": 3,
+    "test WAPE bread h1": {
+      "mean": 0.09944392520598593,
+      "std": 0.0012287964864032097
+    },
+    "ATE bias 20% (test randomized)": {
+      "mean": -24.232703556076746,
+      "std": 13.622279755974047
+    },
+    "CATE Spearman (test)": {
+      "mean": 0.7653442076135614,
+      "std": 0.035415563524130875
+    },
+    "planning regret \u20ac (test)": {
+      "mean": 101.9581636231884,
+      "std": 24.436798818586958
+    },
+    "planning regret \u20ac (val)": {
+      "mean": 143.64261927536234,
+      "std": 17.9955548139547
+    },
+    "oracle match (test)": {
+      "mean": 0.5359420289855072,
+      "std": 0.0436585032076392
+    },
+    "action sensitivity (test)": {
+      "mean": 0.9293680043804419,
+      "std": 0.04641449295595405
+    },
+    "\u0394 margin 4w bias 10% \u20ac (test)": {
+      "mean": 92.70014135138034,
+      "std": 133.33977395502265
+    },
+    "hybrid regret \u20ac (test)": {
+      "mean": 94.0210763768116,
+      "std": 8.188504293164533
+    },
+    "hybrid regret \u20ac (val)": {
+      "mean": 94.92471681159422,
+      "std": 11.264383112545383
     }
   },
   {
@@ -249,6 +341,14 @@
     "\u0394 margin 4w bias 10% \u20ac (test)": {
       "mean": -15.988312004837029,
       "std": 6.605004688141443
+    },
+    "hybrid regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "hybrid regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
     }
   }
 ]
