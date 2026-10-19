@@ -1,0 +1,229 @@
+experiment:
+  threads: 1
+  name: poc_tiny_s2
+  seed: 2
+  device: auto
+  output_dir: runs/poc_tiny_s2
+data:
+  split:
+    seed: 0
+    train:
+    - 0
+    - 104
+    val:
+    - 104
+    - 130
+    test:
+    - 130
+    - 156
+    holdout_store_frac: 0.15
+  dir: data
+  categories:
+  - bread
+  - rolls
+  - dairy
+  - spreads
+  - produce
+  - drinks
+  - snacks
+  - household
+  target_category: bread
+  action_categories:
+  - bread
+  max_stores: null
+  window:
+    context_weeks: 8
+    horizon_weeks: 4
+    stride_weeks: 1
+  token_features:
+  - log_units_sold
+  - log_net_price
+  - discount
+  - stockout_frac
+  - waste_rate
+  - log_stock_units
+  price_features:
+  - log_net_price
+  - discount
+  context_features:
+  - week_of_year_sin
+  - week_of_year_cos
+  - national_holiday_onehot
+  - regional_holiday
+  - temp_c
+  - rain_mm
+  known_future_features:
+  - week_of_year_sin
+  - week_of_year_cos
+  - national_holiday_onehot
+  - regional_holiday
+  - temp_forecast_c
+  - rain_forecast_mm
+  - national_bread_flyer
+  - planned_discount_non_action_categories
+  static_store_features:
+  - size_sqm
+  - urban
+  - income_index
+  - competitor_dist_km
+  - lidl_plus_share
+  - region_onehot
+  normalization: fit_on_train_only
+  randomized_sample_weight: 3.0
+model:
+  encoder:
+    causal_time: true
+    type: jepa
+    n_layers: 2
+    n_heads: 4
+    mlp_ratio: 2
+    dropout: 0.1
+    attention: factorized
+    pooling: none
+    masks:
+      future:
+        p: 0.4
+        n_weeks:
+        - 1
+        - 4
+      category:
+        p: 0.3
+        n_categories:
+        - 1
+        - 2
+      price:
+        p: 0.15
+      random_block:
+        p: 0.15
+        ratio: 0.3
+    jepa:
+      predictor:
+        n_layers: 2
+        n_heads: 4
+        d_model: 48
+      ema:
+        start: 0.996
+        end: 0.9995
+      loss: smooth_l1
+      anticollapse:
+        type: vicreg
+        var_weight: 1.0
+        cov_weight: 0.04
+    masked_ae:
+      decoder:
+        n_layers: 1
+      loss: huber
+  world_model:
+    outcome_aux_weight: 1.0
+    type: transformer
+    n_layers: 2
+    n_heads: 4
+    dropout: 0.1
+    action_conditioning: adaln_and_token
+    teacher_forcing_weight: 1.0
+    rollout_weight: 0.5
+    rollout_steps: 4
+    category_loss_weights:
+      bread: 3.0
+      rolls: 1.5
+      spreads: 1.5
+      default: 1.0
+    target_drops_price: true
+    ensemble_size: 3
+  d_model: 64
+  store_id_embedding:
+    enabled: true
+    dropout: 0.5
+  outcome_heads:
+    type: mlp
+    hidden:
+    - 64
+    targets:
+    - log_units_sold
+    - waste_rate
+    train_on: real_embeddings
+    loss: huber
+    censoring: tobit
+baselines:
+  lightgbm:
+    num_threads: 1
+    enabled: true
+    lags:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 8
+    num_leaves: 31
+    n_estimators: 400
+    learning_rate: 0.05
+  diff_in_means:
+    enabled: true
+  calendar_store_probe:
+    enabled: true
+planning:
+  risk_on: uplift
+  hybrid_other_effects: true
+  structured_bread: true
+  calibrate_bread: true
+  discount_levels:
+  - 0.0
+  - 0.1
+  - 0.2
+  - 0.3
+  action_sequence: '[d, 0, 0, 0]'
+  objective: total_margin_4w
+  risk_aversion: 1.0
+  allow_untested_levels: false
+eval:
+  action_ignore_threshold: 0.25
+  untested_grid_step: 0.05
+  splits:
+  - val
+  - test
+  subsets:
+  - all
+  - randomized
+  - cold_start_stores
+  probes:
+    model: ridge
+    cv: grouped_by_store
+    targets:
+    - bread_beta
+    - size_sqm
+    - holiday
+    - traffic_shock
+  knn_k: 10
+  plots: true
+training:
+  batch_size: 128
+  optimizer: adamw
+  weight_decay: 0.05
+  grad_clip: 1.0
+  num_workers: 0
+  stages:
+    pretrain:
+      enabled: true
+      epochs: 15
+      lr: 0.001
+      warmup_frac: 0.05
+    world_model:
+      enabled: true
+      epochs: 20
+      lr: 0.001
+      freeze_encoder: true
+    outcome_heads:
+      enabled: true
+      epochs: 10
+      lr: 0.001
+    joint_finetune:
+      enabled: false
+      epochs: 5
+      lr: 0.0001
+      loss_weights:
+        latent: 1.0
+        outcome: 1.0
+  early_stopping:
+    metric: val_loss
+    patience: 5
+  log_every_steps: 0

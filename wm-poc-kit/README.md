@@ -15,7 +15,14 @@ make test           # pytest
 make smoke          # 30 stores, 2 epochs per stage, all stages + eval + report (< 5 min CPU)
 make tiny           # python -m wmpoc.run --config configs/poc_tiny.yaml
 make ablate         # python -m wmpoc.ablate --config configs/poc_tiny.yaml --grid configs/ablations.yaml
+make audit          # data audit: is the data informative enough? -> runs/data_audit/report.md
+make data_rich      # synthetic panel with a 4x bigger randomized experiment (configs/poc_tiny_rich.yaml)
 ```
+
+Every run evaluates several planners on the same trained world models: the plain world model, `hybrid`,
+`structured`, `structured_pooled` and `calibrated` (world-model bread uplift combined with effects estimated from
+the randomized experiment; see `RESULTS.md`). Diagnostics: `python -m wmpoc.eval.bread_decomposition <run>`,
+`python -m wmpoc.eval.cross_effect_sensitivity <run>`.
 
 ## Running
 

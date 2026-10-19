@@ -7,10 +7,24 @@ store-week, lower is better. Model choices should be read off the val column; te
 
 ## Short answer
 
-**The world-model stack does not beat the simplest policy.** "Never discount" has a test regret of 38 €. The
-reference world model reaches 49 € at full budget and 66 ± 10 € in the ablation budget; no variant goes below 38 €.
-The stack does beat the LightGBM planner by a wide margin (103–107 €). The headroom is small: the oracle beats
-"never discount" by only 38 € on a 37 245 € 4-week margin (0.1 %).
+**On its own, the world model does not beat "never discount".** With two pieces taken from the randomized
+experiment, it can, by a little, and by more when the experiment is bigger.
+
+- The plain world model loses to "never discount" (test regret 47 ± 4 € vs 38 €, full budget, 3 seeds), though it
+  beats the LightGBM planner (103 €). Two errors cause this: a confounded cross-category effect and an
+  under-predicted bread pull-forward.
+- The **structured planner** keeps what the world model predicts well (store-specific week-0 bread uplift, waste,
+  the no-discount baseline) and takes the pull-forward pattern and the cross-category effect from the experiment.
+  With the *true* cross-category effect it beats "never discount" on both datasets (test 34.6 vs 38.3 €; 35.3 vs
+  40.8 € on the richer data), so the world-model part is good enough.
+- Estimated from data, the cross-category effect is too noisy on the original data (± 0.8 % of a ~30 k€ margin) to
+  act on safely: the per-level estimate wins there by luck (test 35.6 ± 1.5 €) and loses on the richer data
+  (56 €). The pooled-slope estimate is robust: never worse than "never discount" in any run or subset, ≈ equal on
+  the original data (37.9 vs 38.3 €; it hardly ever discounts) and **clearly better on the 4× richer experiment
+  (34.9 ± 0.4 vs 40.8 €, val 32.7 vs 37.0 €)**.
+- The headroom is small throughout: the oracle beats "never discount" by ~38–41 € on a ~37 k€ 4-week margin (0.1 %).
+
+Findings of the first round (plain world model):
 
 1. **The bread effect is learned well.** Mean predicted 10 % uplift in week-0 bread units 323 vs true 322; per-store
    uplift ranks correlate 0.88–0.91 with the truth, as good as LightGBM (0.89–0.90). Diff-in-means on the randomized
@@ -31,10 +45,8 @@ The stack does beat the LightGBM planner by a wide margin (103–107 €). The h
    calendar + store and calendar + static features) and the true store price sensitivity better than observable
    store features (R² 0.59 vs 0.54).
 
-7. **Fixes and data check (follow-up).** Taking the cross-category effect from the experiment (hybrid planner)
-   brings the full-budget model to 39 € val regret, level with "never discount" but not better; learning the
-   whole effect from randomized windows only does worse (102 €). The data audit explains why: the experiment
-   identifies the average margin effect only to ± 314 € per store-week while the decision needs ~± 38 €.
+7. **Fixes and data check.** See "Round 2" below: data audit, hybrid, structured, calibrated and pooled planners,
+   full-budget seeds and the richer dataset.
 
 ## Reference run (`configs/poc_tiny.yaml`, JEPA + transformer × 3, full budget, 55 min on 4 CPU cores)
 
@@ -172,18 +184,80 @@ It moves the cross-category effect the right way, but ~3 000 overlapping randomi
 the full effect in latent space: the bread margin effect is badly under-estimated and store ranking gets worse.
 This is the same information limit the audit shows; the representation does not get around it.
 
+## Round 2: fixing the margin effect, full budget, richer data
+
+### Where the bread margin error comes from
+
+Decomposing the 10 % bread margin effect (full-budget reference, test): price loss −309 € (true −310), waste
+−86 € (true −92), volume +210 € (true +163). The volume error is the **pull-forward**: the model predicts
+weeks 1–3 lose [−28, −19, −13] units against a true [−91, −29, 0]. The randomized slots measure the pull-forward
+precisely (pooled share of the week-0 uplift: week 1 −0.325, t = −19; week 2 −0.110, t = −6; week 3 not
+significant, set to 0), close to the generator's 30 % / 10 % without being told.
+
+### Planners compared (all computed from the same trained world models; regret € per store-week, mean ± sd)
+
+- **world model**: plain rollouts.
+- **hybrid**: world-model bread + experimental cross-category effect (per level).
+- **structured**: hybrid + experimental pull-forward; bread margin from week-0 uplift, waste and known prices.
+- **structured pooled**: structured with a pooled log-linear cross-category slope (one parameter, less noise).
+- **calibrated**: structured pooled + week-0 uplift and waste rescaled per level to the experiment's averages.
+
+| models (seeds) | split | world model | hybrid | structured | structured pooled | calibrated | LightGBM | never discount |
+|---|---|---|---|---|---|---|---|---|
+| full budget, original data (3) | val | 44.2 ± 4.3 | 53.6 ± 16 | **32.4 ± 1.5** | 37.0 ± 0.5 | 37.0 ± 0.5 | 76 | 37.7 |
+| | test | 46.6 ± 3.8 | 56.3 ± 11 | **35.6 ± 1.5** | 37.9 ± 0.2 | 37.8 ± 0.2 | 103 | 38.3 |
+| | test, cold-start | 41.1 | 59.7 | 31.6 | **23.7** | **23.7** | 101 | 24.7 |
+| full budget, rich data (2) | val | 64.7 ± 18 | 71.0 ± 9 | 51.0 ± 0.4 | **32.7 ± 0.5** | **32.6 ± 0.2** | 116 | 37.0 |
+| | test | 72.2 ± 23 | 78.5 ± 14 | 56.2 ± 3.5 | **34.9 ± 0.4** | **34.9 ± 0.4** | 119 | 40.8 |
+| | test, cold-start | 75.1 | 94.9 | 68.7 | 25.7 | **24.1** | 134 | 25.7 |
+| reduced budget, reference (3) | test | 66.2 | 65.0 | 37.9 ± 3.0 | 37.8 ± 0.2 | 37.8 | 103 | 38.3 |
+| reduced, enc_masked_ae (3) | test | 63.4 | 53.1 | 35.7 ± 1.2 | 36.5 ± 0.5 | 36.4 | 103 | 38.3 |
+| reduced, enc_linear (3) | test | 64.3 | 59.4 | 33.1 ± 0.8 | 37.1 ± 0.4 | 37.1 | 103 | 38.3 |
+| reduced, enc_supervised (3) | test | 82.2 | 53.1 | **32.7 ± 1.2** | 37.1 ± 0.4 | 37.1 | 103 | 38.3 |
+| reduced, enc_random (3) | test | 66.8 | 51.1 | 34.5 ± 0.6 | 36.7 ± 0.4 | 36.8 | 103 | 38.3 |
+| reduced, randomized_effect (3) | test | 102.0 | 94.0 | 39.7 ± 1.3 | 38.3 ± 0.0 | 38.3 | 103 | 38.3 |
+
+### Is the remaining error the world model or the data? (sensitivity, full budget)
+
+Same world-model predictions, structured planner, only the cross-category effect r(d) changed:
+
+| r(d) used | original data val / test | rich data val / test |
+|---|---|---|
+| never discount | 37.7 / 38.3 | 37.0 / 40.8 |
+| per-level estimate (10 %: +0.65 % ± 0.83 / rich +0.81 % ± 0.44) | 31.3 / 34.6 | 50.8 / 53.7 |
+| pooled slope (10 %: +0.25 % ± 0.25 / rich +0.43 % ± 0.14) | 37.5 / 38.1 | 33.0 / 35.1 |
+| zero | 37.7 / 38.3 | 34.3 / 37.5 |
+| **true** (+0.56 %, diagnostic only) | 33.6 / 34.6 | 34.4 / 35.3 |
+
+With the true cross effect the stack beats "never discount" on both datasets by 3–5 €, so the world model's own
+part (store-specific bread uplift, waste, baseline) is good enough. What decides the result is one number the
+experiment measures with ± 130–250 € of noise per store-week. On the original data the per-level estimate landed
+close to the truth by chance; on the rich data it did not. Choosing between estimators by their test result would
+be tuning on test, so both are reported; the pooled slope is the one that never makes things worse.
+
+### What the three steps showed
+
+1. **Bread margin fix (structured planner):** removes the pull-forward error. Combined with any reasonable
+   cross-category estimate it turns the world model from the worst sensible planner into one that matches or beats
+   "never discount". Encoders matter again here: with the structured planner the supervised encoder is best
+   (test 32.7 €), JEPA the worst (37.9 €), but differences are within ~2 sd. Calibrating the average bread effects
+   to the experiment changes little (calibration factors 0.9–1.2) and only helps on cold-start stores.
+2. **Full budget, 3 seeds:** more training helps the plain world model (test 47 vs 66 € reduced) and gives the
+   best structured result (35.6 ± 1.5 €). Seeds agree closely once the structured planner is used (sd ≤ 1.5 €).
+3. **Richer data (4× randomized slots, `data_rich/`):** the experiment-based parts become precise enough to act
+   on: the pooled planner discounts 16 % of store-weeks (all at 10 %), matches the oracle in 66 % and beats "never
+   discount" by ~6 € (≈ 14 % of the headroom) on val and test, both seeds. The plain world model gets *worse* on
+   the richer data (72 € test): with less confounding its two errors no longer cancel.
+
 ## What to try next
 
-1. **Get the bread margin effect right before anything else.** Bread units are right but the 4-week bread margin
-   effect is too optimistic, most likely through pull-forward and waste in weeks 1–3. A structured decoder (margin
-   from predicted units, stock and the known pull-forward window, or the bread effect fitted to the randomized slots
-   where it is well identified, t = 3.5–17) is the obvious next step.
-2. **Use structure for the cross-category effect** instead of learning it: the hybrid's experimental r(d), or a
-   pooled "halo" parameter shared by all categories, since the experiment cannot resolve each category alone.
-3. **Train longer / bigger ensembles** — the full-budget run is clearly better than the reduced ablation budget
-   (hybrid val regret 39 vs 61 €), so the reduced-budget ablations understate what the stack can do.
-4. **More experimentation is the lasting fix.** In the simulator: more stores in the cohort or more slot weeks
-   (`data_gen/generate_fake_data.py`), then re-run the audit; the audit says ~67× for the average effect.
+1. **Shrink the cross-category effect towards a structural prior** (e.g. one halo parameter for all categories,
+   or a hierarchical prior across stores) instead of choosing between per-level and pooled estimates.
+2. **Put the pull-forward into the world model** (e.g. an auxiliary loss on randomized slots for weeks 1–3), so
+   the structured planner's experimental piece is learned rather than bolted on.
+3. **Store-level decisions:** the audit shows a fixed level per store captures ~75 % of the headroom; a planner
+   that pools a store's weeks before deciding may be more robust than per store-week decisions.
+4. **More experimentation** remains the lasting fix: the gain grew from ~0 to ~6 € with 4× the randomized weeks.
 
 ## Changes from the brief, and why
 
@@ -240,6 +314,11 @@ Runs
 - **Ablation budget reduced** (8 + 8 epochs, ensemble of 2, see above) to fit the 17 × 3 grid on 4 CPU cores. Runs
   with identical pretraining settings share one pretraining checkpoint (bit-identical to re-running it).
 - **Holiday probe is undefined on test**: no national holiday falls on a test origin week; it is reported for val.
+- **Planner variants** (`planning.hybrid_other_effects`, `structured_bread`, `calibrate_bread`, new keys) are
+  evaluated next to the plain world model in every run; they use experiment estimates from training-period slot
+  weeks only (`wmpoc/baselines/experimental_effects.py`). Earlier runs were re-evaluated from their checkpoints.
+- **`data_rich/`** (`--cohort-frac 0.9 --experiment-windows 10-154`, new generator options whose defaults reproduce
+  `data/` byte for byte) and `configs/poc_tiny_rich.yaml` are additions to the brief.
 - **Follow-up grid** `configs/ablations_extra.yaml` (randomized-week weight 10 and 30) is an addition to the brief,
   run with the same budget; its summary is `runs/ablations/summary_extra.md`.
 - **The full-budget reference** was evaluated a second time from its checkpoints (`--eval-only`) after the

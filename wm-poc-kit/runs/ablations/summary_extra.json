@@ -41,6 +41,30 @@
     "hybrid regret \u20ac (val)": {
       "mean": NaN,
       "std": NaN
+    },
+    "structured regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
     }
   },
   {
@@ -83,6 +107,30 @@
       "std": NaN
     },
     "hybrid regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (val)": {
       "mean": NaN,
       "std": NaN
     }
@@ -129,6 +177,30 @@
     "hybrid regret \u20ac (val)": {
       "mean": 60.845919492753644,
       "std": 14.271003873206501
+    },
+    "structured regret \u20ac (test)": {
+      "mean": 37.90955384057971,
+      "std": 3.0183114678333225
+    },
+    "structured regret \u20ac (val)": {
+      "mean": 33.7447613768116,
+      "std": 0.06011238024021928
+    },
+    "structured pooled regret \u20ac (test)": {
+      "mean": 37.778983840579684,
+      "std": 0.22531444868057324
+    },
+    "structured pooled regret \u20ac (val)": {
+      "mean": 36.943106376811585,
+      "std": 0.29124504020395087
+    },
+    "calibrated regret \u20ac (test)": {
+      "mean": 37.75519884057969,
+      "std": 0.3386957023922993
+    },
+    "calibrated regret \u20ac (val)": {
+      "mean": 36.93852644927535,
+      "std": 0.24017791525973384
     }
   },
   {
@@ -171,6 +243,30 @@
       "std": NaN
     },
     "hybrid regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (val)": {
       "mean": NaN,
       "std": NaN
     }
@@ -217,6 +313,30 @@
     "hybrid regret \u20ac (val)": {
       "mean": NaN,
       "std": NaN
+    },
+    "structured regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
     }
   },
   {
@@ -259,6 +379,30 @@
       "std": NaN
     },
     "hybrid regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (val)": {
       "mean": NaN,
       "std": NaN
     }
@@ -305,6 +449,30 @@
     "hybrid regret \u20ac (val)": {
       "mean": 94.92471681159422,
       "std": 11.264383112545383
+    },
+    "structured regret \u20ac (test)": {
+      "mean": 39.65125789855071,
+      "std": 1.259387128744362
+    },
+    "structured regret \u20ac (val)": {
+      "mean": 37.64845782608695,
+      "std": 0.09283852709940994
+    },
+    "structured pooled regret \u20ac (test)": {
+      "mean": 38.32392782608693,
+      "std": 0.0
+    },
+    "structured pooled regret \u20ac (val)": {
+      "mean": 37.66051434782607,
+      "std": 0.0
+    },
+    "calibrated regret \u20ac (test)": {
+      "mean": 38.32392782608693,
+      "std": 0.0
+    },
+    "calibrated regret \u20ac (val)": {
+      "mean": 37.66051434782607,
+      "std": 0.0
     }
   },
   {
@@ -347,6 +515,30 @@
       "std": NaN
     },
     "hybrid regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "structured pooled regret \u20ac (val)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (test)": {
+      "mean": NaN,
+      "std": NaN
+    },
+    "calibrated regret \u20ac (val)": {
       "mean": NaN,
       "std": NaN
     }
