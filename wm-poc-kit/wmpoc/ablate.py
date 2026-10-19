@@ -53,7 +53,8 @@ def pretrain_key(cfg) -> str | None:
         return None
     c = to_dict(cfg)
     data = {k: v for k, v in c["data"].items() if k != "randomized_sample_weight"}
-    blob = {"data": data, "d_model": c["model"]["d_model"], "encoder": c["model"]["encoder"],
+    enc = {k: v for k, v in c["model"]["encoder"].items() if k != "pooling"}  # pooling is read by world models only
+    blob = {"data": data, "d_model": c["model"]["d_model"], "encoder": enc,
             "store": c["model"]["store_id_embedding"], "pretrain": c["training"]["stages"]["pretrain"],
             "batch": c["training"]["batch_size"], "opt": [c["training"]["weight_decay"], c["training"]["grad_clip"]],
             "es": c["training"]["early_stopping"], "seed": c["experiment"]["seed"]}
@@ -97,9 +98,13 @@ def main() -> None:
     if not a.summary_only:
         pending = [j for j in jobs if not (j["dir"] / "metrics.json").exists()]
         producers: dict[str, dict] = {}
-        for j in jobs:  # finished runs can also provide the shared checkpoint
-            if j["key"] and j["key"] not in producers and (j["dir"] / "checkpoints" / "pretrain.pt").exists():
-                producers[j["key"]] = j
+        # any earlier run under --out with a pretraining checkpoint can provide it (keyed by its saved config)
+        for ck in sorted(out.glob("*/seed*/checkpoints/pretrain.pt")):
+            run_dir = ck.parent.parent
+            if (run_dir / "config.yaml").exists() and (run_dir / "metrics.json").exists():
+                key = pretrain_key(OmegaConf.load(run_dir / "config.yaml"))
+                if key and key not in producers:
+                    producers[key] = {"name": run_dir.parent.name, "seed": None, "dir": run_dir, "key": key}
         phase1, phase2 = [], []
         for j in pending:
             if j["key"] is None:
